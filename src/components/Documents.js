@@ -83,8 +83,8 @@ const Documents = () => {
     if (editMode && typeof item === 'object' && 'template' in item) {
       // This is a command template
       setCommandInput(item.template);
-    } else if (typeof item === 'object' && 'id' in item && 'name' in item && 'type' in item) {
-      // This is a document search result
+    } else if (typeof item === 'object' && 'id' in item && 'name' in item && 'type' in item && 'url' in item) {
+      // This is a document search result (must have a url property)
       window.open(item.url, '_blank');
       setCommandInput('');
       setIsDropdownOpen(false);
@@ -576,19 +576,6 @@ const Documents = () => {
   const prevPage = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
-    }
-  };
-
-  // Helper functions for document actions
-  const downloadDocument = (doc) => {
-    window.open(doc.url, '_blank');
-  };
-
-  const previewDocument = (doc) => {
-    if (doc.previewUrl && doc.previewUrl !== doc.url) {
-      window.open(doc.previewUrl, '_blank');
-    } else {
-      window.open(doc.url, '_blank');
     }
   };
 
