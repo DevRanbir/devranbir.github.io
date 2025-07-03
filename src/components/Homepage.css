@@ -1,0 +1,1305 @@
+/* Homepage.css */
+.homepage {
+  position: relative;
+  width: 100vw;
+  height: 300vh;
+  overflow: auto;
+  scroll-behavior: smooth;
+  background-color: #000;
+}
+
+.top-area-shade {
+    background: radial-gradient(circle,rgba(255, 255, 255, 1) 20%, rgba(0, 0, 0, 1) 15%);
+    height: 100vh;
+    width: 50%;
+}
+
+.spline-cover {
+  position: absolute;
+  bottom: 17px;
+  right: 51%;
+  width: 150px;
+  height: 50px;
+  background:  black;
+  z-index: 3;
+}
+
+/* Spline Background */
+.spline-background {
+  position: absolute;
+  padding-top: 3px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 1;
+}
+
+/* Style the spline-viewer web component */
+spline-viewer {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Command Line Interface */
+.command-line-container {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 700px;
+  z-index: 1000;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.glass-panel {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  overflow: hidden;
+}
+
+.command-input-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prompt-symbol {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 18px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.command-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 16px;
+  caret-color: white;
+  z-index: 5000;
+}
+
+.command-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Dropdown Panel */
+.dropdown-panel {
+  padding: 20px;
+  max-height: 350px;
+  overflow-y: auto;
+  z-index: 10000;
+}
+
+.explorer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 15px;
+}
+
+.explorer-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 15px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.explorer-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.item-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.item-name {
+  font-size: 13px;
+  color: white;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Command Template Items */
+.explorer-item.command-template {
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.explorer-item.command-template:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.explorer-item.command-template .item-icon {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.explorer-item.command-template .item-name {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: white;
+}
+
+.explorer-item.command-template .item-description {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: normal;
+  line-height: 1.3;
+}
+
+/* Scrollbar styling */
+.dropdown-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.dropdown-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Social Media Links */
+.social-links-container {
+  position: fixed;
+  left: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 10;
+}
+
+.social-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.social-link svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.5;
+}
+
+/* Password Modal */
+.password-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.password-modal {
+  width: 90%;
+  max-width: 400px;
+  background: rgba(15, 15, 15, 0.8);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 30px;
+  color: white;
+  text-align: center;
+}
+
+.password-modal h3 {
+  margin-top: 0;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.password-modal p {
+  margin-bottom: 20px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.password-input-wrapper {
+  margin-bottom: 20px;
+}
+
+.password-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px 15px;
+  border-radius: 6px;
+  color: white;
+  font-size: 16px;
+}
+
+.password-error {
+  color: #ff4d4d;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.password-modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.password-submit-btn,
+.password-cancel-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.password-submit-btn {
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
+}
+
+.password-cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.password-submit-btn:hover {
+  background: white;
+  transform: translateY(-2px);
+}
+
+.password-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Edit Mode Styles */
+.edit-mode-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.exit-edit-mode-btn {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.exit-edit-mode-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translateY(-2px);
+}
+
+/* Social Link Edit Mode */
+.social-link-wrapper {
+  position: relative;
+}
+
+.social-link.editable {
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.social-link .edit-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 20px;
+}
+
+.social-link.editable:hover .edit-icon {
+  opacity: 1;
+}
+
+/* Add New Social Link Button */
+.add-new-button {
+  background: rgba(76, 175, 80, 0.3) !important;
+  border: 1px solid rgba(76, 175, 80, 0.5) !important;
+  color: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.add-new-button:hover {
+  background: rgba(76, 175, 80, 0.5) !important;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.add-new-button svg {
+  stroke-width: 2;
+}
+
+.add-new-wrapper {
+  margin-top: 10px;
+}
+
+/* Animation for the add form */
+.add-new-wrapper .social-edit-form {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.social-edit-form {
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 220px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  z-index: 20;
+}
+
+.social-edit-form input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: white;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.edit-form-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.edit-form-buttons button {
+  flex: 1;
+  padding: 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.edit-form-buttons button:first-child {
+  background: rgba(76, 175, 76, 0.3);
+  border-color: rgba(76, 175, 76, 0.5);
+}
+
+.edit-form-buttons button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.edit-form-buttons button:first-child:hover {
+  background: rgba(76, 175, 76, 0.4);
+}
+
+.delete-button {
+  margin-top: 10px;
+  width: 100%;
+  padding: 6px;
+  border-radius: 4px;
+  background: rgba(244, 67, 54, 0.3);
+  border: 1px solid rgba(244, 67, 54, 0.5);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.delete-button:hover {
+  background: rgba(244, 67, 54, 0.5);
+}
+
+/* Command Message */
+.command-message {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-size: 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  animation: fadeInUp 0.3s ease, fadeOut 0.3s ease 2.7s;
+  max-width: 80%;
+  text-align: center;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Author Section Styling */
+.author-section {
+  position: absolute;
+  top: 28%;
+  right: 10%;
+  width: 550px;
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 15px;
+  padding: 20px;
+  z-index: 10;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.authornameimg {
+  position: relative;
+  width: 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-right: 30px;
+  top: 0;
+  right: 0;
+}
+
+.author-avatar {
+  width: 300%;
+  object-fit: contain;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.author-avatar:hover {
+  transform: rotateZ(-2deg) scale(1.0);
+  transition: transform 0.3s ease;
+}
+
+.author-divider {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0), 
+    rgba(255, 255, 255, 0.5), 
+    rgba(255, 255, 255, 0));
+  margin: 0 20px;
+}
+
+.author-description {
+  position: relative;
+  flex: 1;
+  color: white;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.author-description h2 {
+  font-size: 22px;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.author-description p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.edit-author-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: white;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.edit-author-btn:hover {
+  opacity: 1;
+}
+
+/* Author Edit Form Styles */
+.author-edit-form {
+  width: 100%;
+}
+
+.author-edit-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.author-edit-textarea:focus {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.author-edit-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.author-edit-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.author-save-btn, .author-cancel-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.author-save-btn {
+  background: rgba(76, 175, 80, 0.8);
+  color: white;
+}
+
+.author-save-btn:hover {
+  background: rgba(76, 175, 80, 1);
+  transform: translateY(-1px);
+}
+
+.author-cancel-btn {
+  background: rgba(244, 67, 54, 0.8);
+  color: white;
+}
+
+.author-cancel-btn:hover {
+  background: rgba(244, 67, 54, 1);
+  transform: translateY(-1px);
+}
+
+/* Skills Section Styles */
+.author-skills-section {
+  margin-top: 20px;
+}
+
+.author-skills-section h3 {
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: white;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.skill-badge:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.skill-name {
+  margin-right: 6px;
+}
+
+.remove-skill-btn {
+  background: rgba(244, 67, 54, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 4px;
+}
+
+.remove-skill-btn:hover {
+  background: rgba(244, 67, 54, 1);
+  transform: scale(1.1);
+}
+
+.add-skill-badge {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px dashed rgba(76, 175, 80, 0.5);
+  cursor: pointer;
+  position: relative;
+}
+
+.add-skill-badge:hover {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: rgba(76, 175, 80, 0.7);
+}
+
+.add-skill-text {
+  color: rgba(76, 175, 80, 0.9);
+  font-weight: 500;
+}
+
+.add-skill-badge:hover .add-skill-text {
+  color: rgba(76, 175, 80, 1);
+}
+
+.add-skill-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  margin-bottom: 5px;
+}
+
+.add-skill-badge:hover .add-skill-tooltip {
+  opacity: 1;
+}
+
+/* Skills responsive styles */
+@media (max-width: 768px) {
+  .author-skills-section {
+    margin-top: 15px;
+  }
+  
+  .author-skills-section h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .skills-container {
+    gap: 6px;
+  }
+  
+  .skill-badge {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+}
+
+/* Responsive Styles for Author Section */
+@media (max-width: 768px) {
+  .author-section {
+    width: 400px;
+    flex-direction: column;
+    top: 25%;
+  }
+  
+  .authornameimg {
+    width: 100%;
+    padding-right: 0;
+    padding-bottom: 15px;
+  }
+  
+  .author-divider {
+    width: 80%;
+    height: 1px;
+    margin: 15px 0;
+    background: linear-gradient(to right, 
+      rgba(255, 255, 255, 0), 
+      rgba(255, 255, 255, 0.5), 
+      rgba(255, 255, 255, 0));
+  }
+}
+
+@media (max-width: 480px) {
+  .author-section {
+    width: 90%;
+    right: 5%;
+    top: 20%;
+  }
+}
+
+@media (max-width: 768px) {
+  .command-line-container {
+    width: 90%;
+    top: 20px;
+  }
+  
+  .explorer-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 10px;
+  }
+  
+  .item-icon {
+    font-size: 24px;
+  }
+  
+  .item-name {
+    font-size: 12px;
+  }
+  
+  .social-links-container {
+    left: 20px;
+    gap: 15px;
+  }
+  
+  .social-link {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .social-link svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .social-edit-form {
+    width: 180px;
+    left: 50px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .social-links-container {
+    left: 15px;
+    gap: 12px;
+  }
+  
+  .social-link {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Button styled as social link */
+.social-link-wrapper button.social-link {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+  padding: 0;
+  cursor: pointer;
+}
+
+.social-link-wrapper button.social-link:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Bottom Pattern Animation */
+.bottom-pattern {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 200px;
+  overflow: hidden;
+  z-index: 40000000;
+  pointer-events: none;
+}
+
+.wave-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.wave {
+  position: absolute;
+  bottom: 0;
+  left: -50%;
+  width: 200%;
+  height: 100px;
+  background: linear-gradient(45deg, 
+    rgba(147, 51, 234, 0.1), 
+    rgba(79, 70, 229, 0.1), 
+    rgba(59, 130, 246, 0.1)
+  );
+  border-radius: 50% 50% 0 0;
+  animation: waveFloat 8s ease-in-out infinite;
+}
+
+.wave-1 {
+  animation-delay: 0s;
+  opacity: 0.4;
+  height: 80px;
+}
+
+.wave-2 {
+  animation-delay: -2s;
+  opacity: 0.3;
+  height: 60px;
+  background: linear-gradient(45deg, 
+    rgba(236, 72, 153, 0.1), 
+    rgba(168, 85, 247, 0.1)
+  );
+}
+
+.wave-3 {
+  animation-delay: -4s;
+  opacity: 0.2;
+  height: 40px;
+  background: linear-gradient(45deg, 
+    rgba(34, 197, 94, 0.1), 
+    rgba(59, 130, 246, 0.1)
+  );
+}
+
+.geometric-shapes {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(45deg, 
+    rgba(255, 255, 255, 0.05), 
+    rgba(147, 51, 234, 0.1)
+  );
+  animation: floatShape 12s ease-in-out infinite;
+}
+
+.shape-1 {
+  width: 30px;
+  height: 30px;
+  left: 10%;
+  bottom: 20px;
+  animation-delay: 0s;
+}
+
+.shape-2 {
+  width: 20px;
+  height: 20px;
+  left: 25%;
+  bottom: 40px;
+  animation-delay: -3s;
+  background: linear-gradient(45deg, 
+    rgba(236, 72, 153, 0.1), 
+    rgba(168, 85, 247, 0.1)
+  );
+}
+
+.shape-3 {
+  width: 25px;
+  height: 25px;
+  right: 20%;
+  bottom: 30px;
+  animation-delay: -6s;
+  background: linear-gradient(45deg, 
+    rgba(34, 197, 94, 0.1), 
+    rgba(59, 130, 246, 0.1)
+  );
+}
+
+.shape-4 {
+  width: 15px;
+  height: 15px;
+  right: 10%;
+  bottom: 50px;
+  animation-delay: -9s;
+  background: linear-gradient(45deg, 
+    rgba(251, 191, 36, 0.1), 
+    rgba(239, 68, 68, 0.1)
+  );
+}
+
+@keyframes waveFloat {
+  0%, 100% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-5px) translateY(-5px) rotate(1deg);
+  }
+  50% {
+    transform: translateX(0) translateY(-10px) rotate(0deg);
+  }
+  75% {
+    transform: translateX(5px) translateY(-5px) rotate(-1deg);
+  }
+}
+
+@keyframes floatShape {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(-20px) rotate(90deg) scale(1.1);
+  }
+  50% {
+    transform: translateY(-15px) rotate(180deg) scale(0.9);
+  }
+  75% {
+    transform: translateY(-25px) rotate(270deg) scale(1.05);
+  }
+}
+
+/* Digital Clock Styles */
+.digital-clock-container {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 12px;
+  padding: 15px 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.current-date {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.date-display {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.clock-container {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.clock-col {
+  text-align: center;
+  min-width: 45px;
+  position: relative;
+}
+
+.clock-col:not(:last-child)::after {
+  content: ":";
+  position: absolute;
+  right: -9px;
+  top: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.clock-timer::before {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.clock-hours::before {
+  content: var(--timer-hours);
+}
+
+.clock-minutes::before {
+  content: var(--timer-minutes);
+}
+
+.clock-seconds::before {
+  content: var(--timer-seconds);
+}
+
+.clock-label {
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  font-size: 9px;
+  margin-top: 2px;
+  margin-bottom: 0;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* Responsive adjustments for clock */
+@media (max-width: 768px) {
+  .digital-clock-container {
+    top: 15px;
+    left: 15px;
+    padding: 12px 15px;
+  }
+  
+  .clock-timer::before {
+    font-size: 18px;
+  }
+  
+  .date-display {
+    font-size: 11px;
+  }
+  
+  .clock-container {
+    gap: 12px;
+  }
+  
+  .clock-col {
+    min-width: 40px;
+  }
+  
+  .clock-col:not(:last-child)::after {
+    right: -7px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .digital-clock-container {
+    top: 10px;
+    left: 10px;
+    padding: 10px 12px;
+  }
+  
+  .clock-timer::before {
+    font-size: 16px;
+  }
+  
+  .date-display {
+    font-size: 10px;
+  }
+  
+  .clock-container {
+    gap: 10px;
+  }
+  
+  .clock-col {
+    min-width: 35px;
+  }
+  
+  .clock-label {
+    font-size: 8px;
+  }
+}
+
+/* Add Skill Input Form Styles */
+.add-skill-input-form {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.5);
+  padding: 8px;
+  min-width: 180px;
+}
+
+.skill-input-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skill-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: white;
+  outline: none;
+  flex: 1;
+  min-width: 100px;
+}
+
+.skill-input:focus {
+  border-color: rgba(76, 175, 80, 0.7);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.skill-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+}
+
+.skill-input-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.skill-save-btn, .skill-cancel-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.skill-save-btn {
+  color: rgba(76, 175, 80, 0.9);
+}
+
+.skill-save-btn:hover {
+  color: rgba(76, 175, 80, 1);
+  background: rgba(76, 175, 80, 0.2);
+}
+
+.skill-cancel-btn {
+  color: rgba(244, 67, 54, 0.9);
+}
+
+.skill-cancel-btn:hover {
+  color: rgba(244, 67, 54, 1);
+  background: rgba(244, 67, 54, 0.2);
+}
