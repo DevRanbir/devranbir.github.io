@@ -83,6 +83,8 @@ const Homepage = () => {
       // Handle navigation based on the selected item
       if (item.name === 'Documents') {
         navigate('/documents');
+      } else if (item.name === 'Projects') {
+        navigate('/projects');
       }
     }
     // Keep dropdown open for command templates in edit mode
@@ -95,6 +97,24 @@ const Homepage = () => {
   const handleCommandSubmit = (e) => {
     if (e.key === 'Enter') {
       const command = commandInput.toLowerCase().trim();
+      
+      // Navigation commands (available in both edit and normal mode)
+      if (command === 'documents') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/documents');
+        return;
+      } else if (command === 'projects') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/projects');
+        return;
+      } else if (command === 'home') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/');
+        return;
+      }
       
       if (command === 'edit') {
         setShowPasswordModal(true);
@@ -445,15 +465,20 @@ const Homepage = () => {
   
   // Effect for handling edit command - Removed since it's now handled in handleCommandSubmit
   useEffect(() => {
-    // Load the Spline viewer script
+    // Load the latest Spline viewer script with error handling
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = 'https://unpkg.com/@splinetool/viewer@1.10.18/build/spline-viewer.js';
+    script.src = 'https://unpkg.com/@splinetool/viewer@latest/build/spline-viewer.js';
+    script.onerror = () => {
+      console.warn('Failed to load Spline viewer script, falling back to basic version');
+    };
     document.head.appendChild(script);
 
     return () => {
       // Cleanup script when component unmounts
-      document.head.removeChild(script);
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
     };
   }, []);
 
@@ -722,7 +747,10 @@ const Homepage = () => {
         </div>
         
         <div className="top-area-shade">
-          <spline-viewer url="https://prod.spline.design/G73ETPu1BKxE3nue/scene.splinecode"></spline-viewer>
+          <spline-viewer 
+            url="https://prod.spline.design/G73ETPu1BKxE3nue/scene.splinecode"
+            onError={() => console.warn('Spline scene failed to load')}
+          ></spline-viewer>
           <div className="spline-cover"></div>
         </div>
 

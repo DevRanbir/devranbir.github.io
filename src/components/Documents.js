@@ -99,6 +99,11 @@ const Documents = () => {
         setIsDropdownOpen(false);
         navigate('/');
         return;
+      } else if (item.name === 'Projects') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/projects');
+        return;
       }
       
       setCommandInput(item.name);
@@ -122,6 +127,25 @@ const Documents = () => {
   const handleCommandSubmit = (e) => {
     if (e.key === 'Enter') {
       const command = commandInput.toLowerCase().trim();
+      
+      // Navigation commands (available in both edit and normal mode)
+      if (command === 'home') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/');
+        return;
+      } else if (command === 'projects') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/projects');
+        return;
+      } else if (command === 'documents') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        // Already on documents page, just show message
+        showMessage('You are already on the Documents page.');
+        return;
+      }
       
       if (command === 'edit') {
         setShowPasswordModal(true);
@@ -526,12 +550,12 @@ const Documents = () => {
       }
     }
     
-    // Load the Spline viewer script with error handling
+    // Load the latest Spline viewer script with error handling
     const script = document.createElement('script');
     script.type = 'module';
-    script.src = 'https://unpkg.com/@splinetool/viewer@1.10.18/build/spline-viewer.js';
+    script.src = 'https://unpkg.com/@splinetool/viewer@latest/build/spline-viewer.js';
     script.onerror = () => {
-      console.warn('Failed to load Spline viewer script');
+      console.warn('Failed to load Spline viewer script, falling back to basic version');
     };
     document.head.appendChild(script);
 
@@ -578,10 +602,6 @@ const Documents = () => {
       setCurrentPage(currentPage - 1);
     }
   };
-
-  // Debug logging
-  console.log('Documents component rendering with documents:', documents);
-  console.log('Edit mode:', editMode);
   
   return (
     <div className="homepage">
@@ -685,7 +705,10 @@ const Documents = () => {
         </div>
         
         <div className="top-area-shade">
-          <spline-viewer url="https://prod.spline.design/G73ETPu1BKxE3nue/scene.splinecode"></spline-viewer>
+          <spline-viewer 
+            url="https://prod.spline.design/G73ETPu1BKxE3nue/scene.splinecode"
+            onError={() => console.warn('Spline scene failed to load')}
+          ></spline-viewer>
           <div className="spline-cover"></div>
         </div>
 
