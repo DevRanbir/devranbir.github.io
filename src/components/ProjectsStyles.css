@@ -2,7 +2,7 @@
 
 .projects-section {
   position: absolute ! important;
-  top: 40%;
+  top: 45%;
   right: 250px;
   transform: translateY(-50%);
   width: 600px;
@@ -37,7 +37,7 @@
   max-height: 600px;
   object-fit: contain;
   filter: drop-shadow(0 0 10px rgba(0, 150, 255, 0.3));
-  margin-bottom: -70px;
+  margin-bottom: -80px;
 }
 
 .projects-list {
@@ -60,12 +60,6 @@
   position: relative;
   max-width: 250px;
   height: auto;
-}
-
-.project-item:hover {
-  box-shadow: #41009c 0px 25px 20px -20px;
-  background-color: rgba(0, 0, 0, 0.8);
-  border-color: 2px solid #41009c;
 }
 
 .project-icon {
@@ -631,4 +625,89 @@
   height: 4px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
+}
+
+/* Empty State Styling */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  margin: 20px 0;
+  grid-column: 1 / -1;
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-state::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+  color: rgba(0, 120, 255, 0.6);
+  text-shadow: 0 0 20px rgba(0, 120, 255, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+.empty-state-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;
+  text-shadow: 0 0 10px rgba(0, 150, 255, 0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.empty-state-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+  max-width: 300px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+/* Responsive adjustments for empty state */
+@media (max-width: 768px) {
+  .empty-state {
+    padding: 30px 15px;
+    margin: 15px 0;
+  }
+  
+  .empty-state-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+  
+  .empty-state-title {
+    font-size: 18px;
+  }
+  
+  .empty-state-subtitle {
+    font-size: 13px;
+  }
 }

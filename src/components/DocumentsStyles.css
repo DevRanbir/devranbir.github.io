@@ -2,7 +2,7 @@
 
 .documents-section {
   position: absolute ! important;
-  top: 50%;
+  top: 45%;
   right: 250px;
   transform: translateY(-50%);
   width: 600px;
@@ -64,9 +64,7 @@
 }
 
 .document-item:hover {
-  box-shadow: #41009c 0px 25px 20px -20px;
   background-color: rgba(0, 0, 0, 0.8);
-  border-color: 2px solid #41009c;
 }
 
 .document-icon {
@@ -531,4 +529,92 @@
   height: 4px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
+}
+
+/* Empty State Styles */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  border-radius: 20px;
+  margin: 20px 0;
+  transition: all 0.3s ease;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.8;
+  animation: pulse 2s infinite;
+  filter: drop-shadow(0 0 10px rgba(0, 150, 255, 0.3));
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+.empty-state-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+}
+
+.empty-state-subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments for empty state */
+@media (max-width: 768px) {
+  .empty-state {
+    padding: 40px 15px;
+    margin: 15px 0;
+  }
+  
+  .empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+  }
+  
+  .empty-state-title {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+  
+  .empty-state-subtitle {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .empty-state {
+    padding: 30px 10px;
+  }
+  
+  .empty-state-icon {
+    font-size: 2.5rem;
+  }
+  
+  .empty-state-title {
+    font-size: 1.3rem;
+  }
+  
+  .empty-state-subtitle {
+    font-size: 0.85rem;
+  }
 }

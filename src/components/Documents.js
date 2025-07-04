@@ -25,6 +25,7 @@ const Documents = () => {
     description: '',
     dateAdded: new Date().toISOString().split('T')[0]
   });
+  const [selectedFilter, setSelectedFilter] = useState('all'); // New state for filtering
 
   // Dummy dropdown items for Windows Explorer style interface
   const dropdownItems = [
@@ -33,7 +34,6 @@ const Documents = () => {
     { id: 6, name: 'Contact', icon: '📫', type: 'action' },
     { id: 7, name: 'Home', icon: '🏠', type: 'action' },
   ];
-  
   // Command templates for edit mode specific to Documents
   const commandTemplates = [
     { id: 'add', template: 'add [type] [name] [url] [description]', description: 'Add a new document (video/image/pdf/text/ppt)' },
@@ -41,6 +41,7 @@ const Documents = () => {
     { id: 'edit', template: 'edit [oldtype] [oldname] - [newtype] [newname] [newdesc]', description: 'Edit document type/name/description' },
     { id: 'remove', template: 'remove [name]', description: 'Remove a document' },
     { id: 'batch-remove', template: 'batch-remove [name1] [name2] [name3] ...', description: 'Remove multiple documents at once' },
+    { id: 'filter', template: 'filter [type]', description: 'Filter documents by type (all/video/image/pdf/text/ppt)' },
     { id: 'exit', template: 'exit', description: 'Exit edit mode' },
   ];
   
@@ -52,6 +53,81 @@ const Documents = () => {
     { value: 'text', label: 'Text', icon: '📝' },
     { value: 'ppt', label: 'PowerPoint', icon: '📊' }
   ];
+  
+  // Filter links for document types (similar to social media container)
+  const filterLinks = [
+    { 
+      id: 'all', 
+      icon: (
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+          <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+          <line x1="3" y1="8" x2="21" y2="8"></line>
+        </svg>
+      ), 
+      label: 'All Documents',
+      type: 'all'
+    },
+    { 
+      id: 'video', 
+      icon: (
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="10,8 16,12 10,16"></polygon>
+        </svg>
+      ), 
+      label: 'Videos',
+      type: 'video'
+    },
+    { 
+      id: 'image', 
+      icon: (
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8" cy="8" r="1.5"></circle>
+          <polyline points="4,20 10,14 14,18 20,12"></polyline>
+        </svg>
+      ), 
+      label: 'Images',
+      type: 'image'
+    },
+    { 
+      id: 'pdf', 
+      icon: (
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+          <path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
+          <polyline points="14,2 14,8 20,8"></polyline>
+        </svg>
+      ), 
+      label: 'PDFs',
+      type: 'pdf'
+    },
+    { 
+      id: 'text', 
+      icon: (
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+          <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path>
+          <line x1="8" y1="8" x2="16" y2="8"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+          <line x1="8" y1="16" x2="16" y2="16"></line>
+        </svg>
+      ), 
+      label: 'Text Files',
+      type: 'text'
+    },
+    { 
+      id: 'ppt', 
+      icon: (
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+          <rect x="3" y="4" width="18" height="14" rx="2" ry="2"></rect>
+          <line x1="12" y1="18" x2="12" y2="22"></line>
+          <line x1="8" y1="22" x2="16" y2="22"></line>
+        </svg>
+      ), 
+      label: 'PowerPoints',
+      type: 'ppt'
+    }
+  ];
+
   
   const handleInputChange = (e) => {
     setCommandInput(e.target.value);
@@ -68,6 +144,25 @@ const Documents = () => {
       (doc.description && doc.description.toLowerCase().includes(query)) ||
       doc.type.toLowerCase().includes(query)
     ).slice(0, 5); // Limit to 5 results
+  };
+  
+  // Function to get documents based on selected filter
+  const getDocumentsByFilter = () => {
+    if (selectedFilter === 'all') {
+      return documents;
+    }
+    return documents.filter(doc => doc.type === selectedFilter);
+  };
+  
+  // Handle filter selection
+  const handleFilterClick = (filterType) => {
+    setSelectedFilter(filterType);
+    setCurrentPage(0); // Reset to first page when filter changes
+    
+    // Show feedback message
+    const filterLabel = filterLinks.find(f => f.type === filterType)?.label || 'All Documents';
+    const filteredCount = filterType === 'all' ? documents.length : documents.filter(d => d.type === filterType).length;
+    showMessage(`Showing ${filteredCount} ${filterLabel.toLowerCase()}`);
   };
   
   const handleInputFocus = () => {
@@ -236,6 +331,19 @@ const Documents = () => {
         // Exit edit mode command
         else if (command === 'exit') {
           handleExitEditMode();
+        }
+        // Filter command pattern: "filter [type]" - To filter documents by type
+        else if (command.match(/^filter\s+(all|video|image|pdf|text|ppt)$/)) {
+          const matches = command.match(/^filter\s+(all|video|image|pdf|text|ppt)$/);
+          const filterType = matches[1];
+          handleFilterClick(filterType);
+        }
+      } else {
+        // Commands available in normal mode
+        if (command.match(/^filter\s+(all|video|image|pdf|text|ppt)$/)) {
+          const matches = command.match(/^filter\s+(all|video|image|pdf|text|ppt)$/);
+          const filterType = matches[1];
+          handleFilterClick(filterType);
         }
       }
       
@@ -520,6 +628,51 @@ const Documents = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // WebGL error handling effect
+  useEffect(() => {
+    // Override WebGL context creation to handle errors gracefully
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    
+    HTMLCanvasElement.prototype.getContext = function(contextType, contextAttributes) {
+      if (contextType === 'webgl' || contextType === 'experimental-webgl' || contextType === 'webgl2') {
+        try {
+          const context = originalGetContext.call(this, contextType, {
+            ...contextAttributes,
+            antialias: false,
+            alpha: true,
+            premultipliedAlpha: false,
+            preserveDrawingBuffer: false,
+            failIfMajorPerformanceCaveat: false
+          });
+          
+          if (context) {
+            // Add error event listener to suppress GL errors
+            const originalTexImage2D = context.texImage2D;
+            context.texImage2D = function(...args) {
+              try {
+                return originalTexImage2D.apply(this, args);
+              } catch (error) {
+                console.warn('WebGL texImage2D error suppressed:', error);
+                return null;
+              }
+            };
+          }
+          
+          return context;
+        } catch (error) {
+          console.warn('WebGL context creation failed:', error);
+          return null;
+        }
+      }
+      return originalGetContext.call(this, contextType, contextAttributes);
+    };
+
+    // Cleanup function to restore original method
+    return () => {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+    };
+  }, []);
+
   // Load documents from localStorage on initial render
   useEffect(() => {
     const savedDocuments = localStorage.getItem('documents');
@@ -550,10 +703,27 @@ const Documents = () => {
       }
     }
     
-    // Load the latest Spline viewer script with error handling
+    // Load the latest Spline viewer script with enhanced error handling
     const script = document.createElement('script');
     script.type = 'module';
     script.src = 'https://unpkg.com/@splinetool/viewer@latest/build/spline-viewer.js';
+    script.onload = () => {
+      // Add a small delay to ensure the script is fully loaded
+      setTimeout(() => {
+        const splineViewer = document.querySelector('spline-viewer');
+        if (splineViewer) {
+          // Add error event listener to handle WebGL errors
+          splineViewer.addEventListener('error', (e) => {
+            console.warn('Spline viewer error:', e.detail);
+          });
+          
+          // Add load event listener
+          splineViewer.addEventListener('load', () => {
+            console.log('Spline scene loaded successfully');
+          });
+        }
+      }, 100);
+    };
     script.onerror = () => {
       console.warn('Failed to load Spline viewer script, falling back to basic version');
     };
@@ -587,9 +757,10 @@ const Documents = () => {
 
   // Pagination functions
   const documentsPerPage = 2;
-  const totalPages = Math.ceil(documents.length / documentsPerPage);
+  const filteredDocuments = getDocumentsByFilter();
+  const totalPages = Math.ceil(filteredDocuments.length / documentsPerPage);
   const startIndex = currentPage * documentsPerPage;
-  const currentDocuments = documents.slice(startIndex, startIndex + documentsPerPage);
+  const currentDocuments = filteredDocuments.slice(startIndex, startIndex + documentsPerPage);
 
   const nextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -645,6 +816,7 @@ const Documents = () => {
                           cmd.id === 'edit' ? '✏️' : 
                           cmd.id === 'remove' ? '❌' : 
                           cmd.id === 'batch-remove' ? '🗂️' :
+                          cmd.id === 'filter' ? '🔍' :
                           '📝'
                         }</div>
                         <div className="item-name">{cmd.id}</div>
@@ -704,10 +876,36 @@ const Documents = () => {
           </div>
         </div>
         
+        {/* Document Type Filter Links - Vertical Column */}
+        <div className="social-links-container">
+          {filterLinks.map((filter) => (
+            <div key={filter.id} className={`social-link-wrapper ${selectedFilter === filter.type ? 'active' : ''}`}>
+              <button 
+                className={`social-link ${selectedFilter === filter.type ? 'active' : ''}`}
+                aria-label={filter.label}
+                onClick={() => handleFilterClick(filter.type)}
+                title={filter.label}
+              >
+                {filter.icon}
+              </button>
+            </div>
+          ))}
+        </div>
+        
         <div className="top-area-shade">
           <spline-viewer 
             url="https://prod.spline.design/G73ETPu1BKxE3nue/scene.splinecode"
-            onError={() => console.warn('Spline scene failed to load')}
+            onError={(e) => {
+              console.warn('Spline scene failed to load:', e);
+              // Suppress WebGL errors by setting a fallback
+              e.preventDefault();
+            }}
+            loading="lazy"
+            style={{ 
+              pointerEvents: 'none',
+              WebkitTransform: 'translateZ(0)',
+              transform: 'translateZ(0)'
+            }}
           ></spline-viewer>
           <div className="spline-cover"></div>
         </div>
@@ -771,71 +969,93 @@ const Documents = () => {
             <img src="/pic4.png" alt="My Documents" className="documents-header-image" />
           </div>
           
-          {documents.length > 0 && (
+          {filteredDocuments.length > 0 && (
             <div className="pagination-info">
-              <span>Showing {currentDocuments.length} of {documents.length} documents</span>
+              <span>Showing {currentDocuments.length} of {filteredDocuments.length} documents{selectedFilter !== 'all' ? ` (${selectedFilter.toUpperCase()} filter)` : ''}</span>
             </div>
           )}
           
           <div className="documents-list">
-            {currentDocuments.map((doc) => (
-              <div 
-                key={doc.id} 
-                className="document-item"
-                onClick={() => window.open(doc.url, '_blank')}
-                style={{ cursor: 'pointer' }}
-                title="Click to open document"
-              >
+            {currentDocuments.length > 0 ? (
+              currentDocuments.map((doc) => (
                 <div 
-                  className="document-icon"
-                  title="Open document"
+                  key={doc.id} 
+                  className="document-item"
+                  onClick={() => window.open(doc.url, '_blank')}
+                  style={{ cursor: 'pointer' }}
+                  title="Click to open document"
                 >
-                  {getDocumentIcon(doc.type)}
-                </div>
-                <div className="document-info">
-                  <div className="document-name">
-                    {doc.name}
+                  <div 
+                    className="document-icon"
+                    title="Open document"
+                  >
+                    {getDocumentIcon(doc.type)}
                   </div>
-                  {doc.description && (
-                    <div className="document-description">
-                      {doc.description}
+                  <div className="document-info">
+                    <div className="document-name">
+                      {doc.name}
                     </div>
-                  )}
+                    {doc.description && (
+                      <div className="document-description">
+                        {doc.description}
+                      </div>
+                    )}
+                  </div>
+                  <div className="document-actions">
+                    {editMode ? (
+                      <>
+                        <button 
+                          className="edit-document-btn" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditingDocument(doc);
+                          }}
+                          title="Edit document name"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          className="remove-document-btn" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveDocument(doc.id);
+                          }}
+                          title="Delete document"
+                        >
+                          🗑️
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="document-actions">
-                  {editMode ? (
-                    <>
-                      <button 
-                        className="edit-document-btn" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditingDocument(doc);
-                        }}
-                        title="Edit document name"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className="remove-document-btn" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveDocument(doc.id);
-                        }}
-                        title="Delete document"
-                      >
-                        🗑️
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                    </>
-                  )}
+              ))
+            ) : (
+              // Show "Coming Soon" message when no documents match the filter
+              <div className="empty-state">
+                <div className="empty-state-icon">
+                  {selectedFilter === 'all' ? '📄' : 
+                   selectedFilter === 'video' ? '🎬' : 
+                   selectedFilter === 'image' ? '🖼️' : 
+                   selectedFilter === 'pdf' ? '📄' : 
+                   selectedFilter === 'text' ? '📝' : 
+                   selectedFilter === 'ppt' ? '📊' : '📁'}
+                </div>
+                <div className="empty-state-title">
+                  {selectedFilter === 'all' ? 'Coming Soon' : `${filterLinks.find(f => f.type === selectedFilter)?.label || 'Documents'} Coming Soon`}
+                </div>
+                <div className="empty-state-subtitle">
+                  {selectedFilter === 'all' 
+                    ? 'New documents are in creation and will be available soon!' 
+                    : `${filterLinks.find(f => f.type === selectedFilter)?.label || 'Documents'} are currently being prepared.`}
                 </div>
               </div>
-            ))}
+            )}
             
             {editMode && !isAddingDocument && !editingDocument && 
-             (documents.length === 0 || currentPage === totalPages - 1) && (
+             (filteredDocuments.length === 0 || currentPage === totalPages - 1) && (
               <div 
                 className="document-item add-document-item"
                 onClick={startAddingDocument}
@@ -849,7 +1069,7 @@ const Documents = () => {
           </div>
           
           {/* Pagination Controls */}
-          {documents.length > documentsPerPage && (
+          {filteredDocuments.length > documentsPerPage && (
             <div className="pagination-controls">
               <button 
                 className="pagination-btn" 
