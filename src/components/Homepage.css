@@ -93,6 +93,41 @@ spline-viewer {
   color: rgba(255, 255, 255, 0.5);
 }
 
+/* Dropdown Indicator */
+.dropdown-indicator {
+  margin-left: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.dropdown-indicator.open {
+  color: rgba(0, 255, 150, 0.8);
+  transform: rotate(0deg);
+}
+
+.dropdown-indicator.closed {
+  color: rgba(255, 255, 255, 0.6);
+  transform: rotate(0deg);
+}
+
+.dropdown-indicator svg {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-indicator.open svg {
+  transform: rotate(0deg);
+}
+
+.dropdown-indicator.closed svg {
+  transform: rotate(0deg);
+}
+
 /* Dropdown Panel */
 .dropdown-panel {
   padding: 20px;

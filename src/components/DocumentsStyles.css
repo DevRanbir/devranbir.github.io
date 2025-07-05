@@ -2,7 +2,7 @@
 
 .documents-section {
   position: absolute ! important;
-  top: 45%;
+  top: 48%;
   right: 250px;
   transform: translateY(-50%);
   width: 600px;
@@ -14,8 +14,8 @@
   -webkit-backdrop-filter: blur(15px);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   z-index: 100;
-  max-height: 85vh;
-  overflow-y: hidden;
+  max-height: 73vh;
+  overflow-y: visible;
   overflow-x: hidden;
 }
 
@@ -617,4 +617,232 @@
   .empty-state-subtitle {
     font-size: 0.85rem;
   }
+}
+
+/* View Toggle Button Styles */
+
+.view-toggle-button {
+  background: rgba(0, 120, 255, 0.1);
+  border: 1px solid rgba(0, 120, 255, 0.3);
+}
+
+.view-toggle-button:hover {
+  background: rgba(0, 120, 255, 0.2);
+  border-color: rgba(0, 120, 255, 0.5);
+}
+
+/* List View Styles */
+.documents-list.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 450px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 12px;
+  scrollbar-width: none;
+  grid-template-columns: none;
+}
+
+*{
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+.documents-list.blocks-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: start;
+  overflow-y: hidden;
+  max-height: none;
+  scrollbar-width: none;
+}
+
+/* List View Document Items */
+.list-view .document-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  min-height: 60px;
+  max-width: none;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.list-view .document-item:hover {
+  border-color: rgba(0, 120, 255, 0.3);
+}
+
+.list-view .document-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 15px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.list-view .document-icon i {
+  font-size: 28px !important;
+}
+
+.list-view .document-info {
+  flex: 1;
+  align-items: flex-start;
+  text-align: left;
+  margin-right: 15px;
+}
+
+.list-view .document-name {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.list-view .document-description {
+  font-size: 12px;
+  color: #888;
+  text-align: left;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.list-view .document-meta {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.list-view .document-type {
+  background: rgba(0, 120, 255, 0.2);
+  color: rgba(0, 120, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.list-view .document-actions {
+  position: static;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.list-view .add-document-item {
+  justify-content: center;
+  background: rgba(0, 120, 255, 0.05);
+  border: 2px dashed rgba(0, 120, 255, 0.3);
+  padding: 16px;
+}
+
+.list-view .add-document-item:hover {
+  background: rgba(0, 120, 255, 0.1);
+  border-color: rgba(0, 120, 255, 0.5);
+}
+
+.list-view .add-document-item .document-icon {
+  margin-right: 10px;
+}
+
+/* Scrollbar Styles for List View */
+.documents-list.list-view::-webkit-scrollbar {
+  width: 8px;
+}
+
+.documents-list.list-view::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin: 4px 0;
+}
+
+.documents-list.list-view::-webkit-scrollbar-thumb {
+  background: rgba(0, 120, 255, 0.6);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.documents-list.list-view::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 120, 255, 0.8);
+}
+
+/* Enhanced List View Scroll Behavior */
+.documents-list.list-view {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+/* Focus and keyboard navigation support */
+.documents-list.list-view:focus-within {
+  outline: 2px solid rgba(0, 120, 255, 0.4);
+  outline-offset: 2px;
+}
+
+/* Add subtle shadow to indicate scrollable content */
+.documents-list.list-view::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  height: 10px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, transparent 100%);
+  z-index: 1;
+  margin-bottom: -10px;
+  pointer-events: none;
+}
+
+.documents-list.list-view::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  height: 10px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0%, transparent 100%);
+  z-index: 1;
+  margin-top: -10px;
+  pointer-events: none;
+}
+
+/* View Mode Indicator */
+.view-mode-indicator {
+  font-weight: 600;
+  color: rgba(0, 120, 255, 0.8);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive adjustments for list view */
+@media (max-width: 768px) {
+  .list-view .document-item {
+    padding: 10px 12px;
+  }
+  
+  .list-view .document-icon {
+    width: 35px;
+    height: 35px;
+    margin-right: 12px;
+  }
+  
+  .list-view .document-icon i {
+    font-size: 24px !important;
+  }
+  
+  .list-view .document-name {
+    font-size: 14px;
+  }
+  
+  .list-view .document-description {
+    font-size: 11px;
+  }
+}
+
+.social-links-container {
+  margin-top: 20px;
 }

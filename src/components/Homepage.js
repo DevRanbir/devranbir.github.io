@@ -85,6 +85,8 @@ const Homepage = () => {
         navigate('/documents');
       } else if (item.name === 'Projects') {
         navigate('/projects');
+      } else if (item.name === 'About') {
+        navigate('/about');
       }
     }
     // Keep dropdown open for command templates in edit mode
@@ -108,6 +110,11 @@ const Homepage = () => {
         setCommandInput('');
         setIsDropdownOpen(false);
         navigate('/projects');
+        return;
+      } else if (command === 'about') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/about');
         return;
       } else if (command === 'home') {
         setCommandInput('');
@@ -604,6 +611,17 @@ const Homepage = () => {
                   onKeyDown={handleCommandSubmit}
                   autoComplete="off"
                 />
+                <span className={`dropdown-indicator ${isDropdownOpen ? 'open' : 'closed'}`}>
+                  {isDropdownOpen ? (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
+                      <polyline points="15,18 9,12 15,6"></polyline>
+                    </svg>
+                  )}
+                </span>
               </div>
             </form>
             

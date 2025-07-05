@@ -15,17 +15,39 @@ const About = () => {
   const [commandMessage, setCommandMessage] = useState('');
   const [showCommandMessage, setShowCommandMessage] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [editingSocial, setEditingSocial] = useState(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [socialLinks, setSocialLinks] = useState([
+    { id: 'github', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>, url: 'https://github.com/yourname' },
+    { id: 'linkedin', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>, url: 'https://linkedin.com/in/yourname' },
+    { id: 'twitter', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>, url: 'https://twitter.com/yourname' },
+    { id: 'instagram', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>, url: 'https://instagram.com/yourname' },
+    { id: 'mail', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, url: 'mailto:your.email@example.com' },
+  ]);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    iconType: '',
+    url: ''
+  });
+  const [readme, setReadme] = useState('');
+  const [readmeLoading, setReadmeLoading] = useState(true);
+  const [readmeError, setReadmeError] = useState(null);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+  const [scrollInterval, setScrollInterval] = useState(null);
 
   // Dropdown items for navigation
   const dropdownItems = [
-    { id: 1, name: 'Home', icon: '🏠', type: 'action' },
-    { id: 2, name: 'Documents', icon: '📁', type: 'folder' },
-    { id: 3, name: 'Projects', icon: '📽️', type: 'folder' },
-    { id: 4, name: 'Contact', icon: '📫', type: 'action' },
+    { id: 1, name: 'Contact', icon: '📫', type: 'action' },
+    { id: 2, name: 'Home', icon: '🏠', type: 'action' },
+    { id: 3, name: 'Documents', icon: '📁', type: 'folder' },
+    { id: 4, name: 'Projects', icon: '📽️', type: 'folder' },
   ];
   
   // Command templates for edit mode
   const commandTemplates = [
+    { id: 'add', template: 'add [name] [link]', description: 'Add a new social link' },
+    { id: 'edit', template: 'edit [oldname] [oldlink] - [newname] [newlink]', description: 'Edit an existing link' },
+    { id: 'remove', template: 'remove [name] link', description: 'Remove a social link' },
     { id: 'exit', template: 'exit', description: 'Exit edit mode' },
   ];
   
@@ -92,8 +114,31 @@ const About = () => {
       if (command === 'edit') {
         setShowPasswordModal(true);
       } else if (editMode) {
+        // Process commands only available in edit mode
+        
+        // Command pattern: "add [name] [link]" - To add a new social link
+        if (command.match(/^add\s+(\w+)\s+(.+)$/)) {
+          const matches = command.match(/^add\s+(\w+)\s+(.+)$/);
+          const name = matches[1];
+          const url = matches[2];
+          handleCommandCreateLink(name, url);
+        }
+        // Command pattern: "remove [name] link" - To remove an existing social link
+        else if (command.match(/^remove\s+(\w+)\s+link$/)) {
+          const name = command.split(' ')[1];
+          handleCommandRemoveLink(name);
+        } 
+        // Command pattern: "edit [oldname] [oldlink] - [newname] [newlink]" - To edit an existing social link
+        else if (command.match(/^edit\s+(\w+)\s+(.+?)\s+-\s+(\w+)\s+(.+)$/)) {
+          const matches = command.match(/^edit\s+(\w+)\s+(.+?)\s+-\s+(\w+)\s+(.+)$/);
+          const oldName = matches[1];
+          const oldLink = matches[2];
+          const newName = matches[3];
+          const newLink = matches[4];
+          handleCommandEditLink(oldName, oldLink, newName, newLink);
+        }
         // Exit edit mode command
-        if (command === 'exit') {
+        else if (command === 'exit') {
           handleExitEditMode();
         }
       }
@@ -121,7 +166,155 @@ const About = () => {
   
   const handleExitEditMode = () => {
     setEditMode(false);
+    setEditingSocial(null);
+    setIsCreatingNew(false);
     showMessage("Exited edit mode.");
+  };
+
+  const handleSocialEdit = (social) => {
+    setEditingSocial(social);
+    setIsCreatingNew(false);
+    setEditFormData({
+      name: social.id,
+      iconType: 'default',
+      url: social.url
+    });
+  };
+  
+  const handleCreateNew = () => {
+    setIsCreatingNew(true);
+    setEditingSocial(null);
+    setEditFormData({
+      name: '',
+      iconType: 'default',
+      url: ''
+    });
+  };
+  
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: value
+    });
+  };
+  
+  const handleEditFormSubmit = (e) => {
+    e.preventDefault();
+    
+    let updatedLinks;
+    let actionMessage = '';
+    
+    if (isCreatingNew) {
+      // Creating a new social link
+      const newIcon = getDefaultIcon(editFormData.name);
+      const newSocial = {
+        id: editFormData.name.toLowerCase(),
+        icon: newIcon,
+        url: editFormData.url
+      };
+      
+      updatedLinks = [...socialLinks, newSocial];
+      actionMessage = `New "${editFormData.name}" link has been added.`;
+    } else {
+      // Updating an existing link
+      const oldName = editingSocial.id;
+      updatedLinks = socialLinks.map(link => 
+        link.id === editingSocial.id ? 
+        { 
+          ...link, 
+          id: editFormData.name,
+          url: editFormData.url
+        } : 
+        link
+      );
+      actionMessage = `"${oldName}" link has been updated to "${editFormData.name}".`;
+    }
+    
+    // Update the links
+    setSocialLinks(updatedLinks);
+    
+    // Show success message
+    showMessage(actionMessage);
+    
+    // Reset the editing state
+    setEditingSocial(null);
+    setIsCreatingNew(false);
+  };
+  
+  const handleRemoveSocial = (socialId) => {
+    const link = socialLinks.find(link => link.id === socialId);
+    const updatedLinks = socialLinks.filter(link => link.id !== socialId);
+    setSocialLinks(updatedLinks);
+    if (link) {
+      showMessage(`The "${link.id}" link has been removed.`);
+    }
+  };
+
+  // Command handlers for social link operations
+  const handleCommandCreateLink = (name, url) => {
+    // Check if a link with this name already exists
+    const exists = socialLinks.some(link => link.id.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      showMessage(`A link with the name "${name}" already exists. Please use a different name.`);
+      return;
+    }
+    
+    // Create the new link directly
+    const newIcon = getDefaultIcon(name);
+    const newSocial = {
+      id: name.toLowerCase(),
+      icon: newIcon,
+      url: url
+    };
+    
+    const updatedLinks = [...socialLinks, newSocial];
+    setSocialLinks(updatedLinks);
+    showMessage(`New "${name}" link has been added.`);
+  };
+  
+  const handleCommandRemoveLink = (name) => {
+    // Find the link with the given name
+    const link = socialLinks.find(link => link.id.toLowerCase() === name.toLowerCase());
+    if (!link) {
+      showMessage(`No link found with the name "${name}". Please check the name and try again.`);
+      return;
+    }
+    
+    if (window.confirm(`Are you sure you want to remove the "${name}" link?`)) {
+      handleRemoveSocial(link.id);
+      showMessage(`The "${name}" link has been removed.`);
+    }
+  };
+  
+  const handleCommandEditLink = (oldName, oldLink, newName, newLink) => {
+    // Find the link with the given name
+    const link = socialLinks.find(link => link.id.toLowerCase() === oldName.toLowerCase());
+    if (!link) {
+      showMessage(`No link found with the name "${oldName}". Please check the name and try again.`);
+      return;
+    }
+    
+    // Verify the old link matches (optional verification)
+    if (link.url !== oldLink) {
+      showMessage(`The link URL for "${oldName}" doesn't match. Please check and try again.`);
+      return;
+    }
+    
+    // Update the link directly
+    const updatedLinks = socialLinks.map(l => 
+      l.id.toLowerCase() === oldName.toLowerCase() 
+        ? { 
+            ...l, 
+            id: newName.toLowerCase(),
+            url: newLink,
+            icon: getDefaultIcon(newName) // Update icon based on new name
+          } 
+        : l
+    );
+    
+    setSocialLinks(updatedLinks);
+    showMessage(`"${oldName}" link has been updated to "${newName}".`);
   };
 
   // Show a temporary command result message
@@ -133,6 +326,64 @@ const About = () => {
     setTimeout(() => {
       setShowCommandMessage(false);
     }, 3000);
+  };
+
+  // Fetch README content from GitHub API (HTML version)
+  const fetchReadme = async () => {
+    try {
+      setReadmeLoading(true);
+      setReadmeError(null);
+      
+      // Fetch HTML version of README from GitHub API
+      const response = await fetch(
+        `https://api.github.com/repos/DevRanbir/DevRanbir/readme`,
+        {
+          headers: {
+            Accept: 'application/vnd.github.v3.html'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+      
+      // Process HTML to enhance it
+      let processedHtml = await response.text();
+      
+      // Add target="_blank" to all links
+      processedHtml = processedHtml.replace(
+        /<a\s+(?![^>]*\btarget=(['"])_blank\1)[^>]*>/gi,
+        (match) => match.replace(/<a\s/, '<a target="_blank" rel="noopener noreferrer" ')
+      );
+      
+      // Add class to images for animations
+      processedHtml = processedHtml.replace(
+        /<img\s/gi,
+        '<img class="readme-img" '
+      );
+      
+      // Add classes to code blocks for syntax highlighting
+      processedHtml = processedHtml.replace(
+        /<pre>/gi,
+        '<pre class="code-block">'
+      );
+      
+      setReadme(processedHtml);
+    } catch (error) {
+      console.error('Error fetching README:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('404')) {
+        setReadmeError('README not found. This user may not have a profile README.');
+      } else if (errorMessage.includes('401') || errorMessage.includes('403')) {
+        setReadmeError('GitHub API rate limit exceeded. Please try again later.');
+      } else {
+        setReadmeError(`Failed to load README: ${errorMessage}`);
+      }
+    } finally {
+      setReadmeLoading(false);
+    }
   };
 
   // Effect for loading Spline viewer script
@@ -171,6 +422,110 @@ const About = () => {
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Load social links from localStorage on initial render
+  useEffect(() => {
+    const savedLinks = localStorage.getItem('socialLinks');
+    
+    if (savedLinks) {
+      try {
+        // Need to parse the JSON and reconstruct the JSX for icons
+        const parsedLinks = JSON.parse(savedLinks);
+        const reconstructedLinks = parsedLinks.map(link => {
+          return {
+            ...link,
+            icon: getDefaultIcon(link.id) // Re-create the icon JSX
+          };
+        });
+        setSocialLinks(reconstructedLinks);
+      } catch (error) {
+        console.error('Error loading social links from localStorage:', error);
+      }
+    }
+  }, []);
+  
+  // Save social links to localStorage whenever they change
+  useEffect(() => {
+    if (socialLinks.length > 0) {
+      // We need to serialize the links without the JSX icons
+      const serializableLinks = socialLinks.map(({ id, url }) => ({ id, url }));
+      localStorage.setItem('socialLinks', JSON.stringify(serializableLinks));
+    }
+  }, [socialLinks]);
+
+  // Fetch README content when component mounts
+  useEffect(() => {
+    fetchReadme();
+  }, []);
+  
+  // Function to get default icon based on social media name
+  const getDefaultIcon = (name) => {
+    const iconName = name.toLowerCase();
+    if (iconName.includes('github')) {
+      return <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>;
+    } else if (iconName.includes('linkedin')) {
+      return <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>;
+    } else if (iconName.includes('twitter') || iconName.includes('x')) {
+      return <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>;
+    } else if (iconName.includes('instagram')) {
+      return <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>;
+    } else if (iconName.includes('mail') || iconName.includes('email')) {
+      return <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>;
+    } else if (iconName.includes('facebook')) {
+      return <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>;
+    } else {
+      // Generic link icon
+      return <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>;
+    }
+  };
+  
+  const toggleAutoScroll = () => {
+    const container = document.querySelector('.readme-viewer');
+    if (!container) return;
+
+    if (isAutoScrolling) {
+        if (scrollInterval) {
+        clearInterval(scrollInterval);
+        setScrollInterval(null);
+        }
+        setIsAutoScrolling(false);
+        return;
+    }
+
+    // Start auto-scroll
+    const speed = 4; // pixels per frame
+    const fps = 120;  // frame rate
+    const interval = setInterval(() => {
+        const maxScroll = container.scrollHeight - container.clientHeight;
+        if (container.scrollTop >= maxScroll - 1) {
+        clearInterval(interval);
+        setScrollInterval(null);
+        setIsAutoScrolling(false);
+        return;
+        }
+        container.scrollTop += speed;
+    }, 2000 / fps); // ~60fps
+
+    setScrollInterval(interval);
+    setIsAutoScrolling(true);
+    };
+
+
+
+
+  // Cleanup auto-scroll on component unmount
+  useEffect(() => {
+    return () => {
+      if (scrollInterval) {
+        clearInterval(scrollInterval);
+      }
+    };
+  }, [scrollInterval]);
+
+  // Fetch README content when component mounts
+  useEffect(() => {
+    fetchReadme();
+  }, []);
   
   return (
     <div className="homepage">
@@ -193,6 +548,17 @@ const About = () => {
                   onKeyDown={handleCommandSubmit}
                   autoComplete="off"
                 />
+                <span className={`dropdown-indicator ${isDropdownOpen ? 'open' : 'closed'}`}>
+                  {isDropdownOpen ? (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
+                      <polyline points="15,18 9,12 15,6"></polyline>
+                    </svg>
+                  )}
+                </span>
               </div>
             </form>
             
@@ -206,7 +572,7 @@ const About = () => {
                         className="explorer-item command-template"
                         onClick={() => handleItemClick(cmd)}
                       >
-                        <div className="item-icon">🚪</div>
+                        <div className="item-icon">{cmd.id === 'exit' ? '🚪' : cmd.id === 'add' ? '➕' : cmd.id === 'edit' ? '✏️' : cmd.id === 'remove' ? '❌' : '📝'}</div>
                         <div className="item-name">{cmd.id}</div>
                         <div className="item-description">{cmd.description}</div>
                       </div>
@@ -227,6 +593,133 @@ const About = () => {
               </div>
             )}
           </div>
+        </div>
+        
+        {/* Social Media Links - Vertical Column */}
+        <div className="social-links-container">
+          {/* Auto-scroll Play Button - Always at top */}
+          <div className="social-link-wrapper auto-scroll-wrapper">
+            <button 
+              className={`social-link auto-scroll-button ${isAutoScrolling ? 'playing' : ''}`}
+              aria-label={isAutoScrolling ? "Stop auto-scroll" : "Start auto-scroll"}
+              onClick={toggleAutoScroll}
+              title={isAutoScrolling ? "Stop auto-scrolling README" : "Auto-scroll README"}
+            >
+              {isAutoScrolling ? (
+                // Pause icon
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="currentColor">
+                  <rect x="6" y="4" width="4" height="16"></rect>
+                  <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+              ) : (
+                // Play icon
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="currentColor">
+                  <polygon points="5,3 19,12 5,21"></polygon>
+                </svg>
+              )}
+            </button>
+          </div>
+          
+          {socialLinks.map((social) => (
+            <div key={social.id} className={`social-link-wrapper ${editMode ? 'edit-mode' : ''}`}>
+              {editMode && editingSocial?.id === social.id ? (
+                <form className="social-edit-form" onSubmit={handleEditFormSubmit} autoComplete="off">
+                  <input
+                    type="text"
+                    name="name"
+                    value={editFormData.name}
+                    onChange={handleEditFormChange}
+                    placeholder="Social name"
+                    required
+                  />
+                  <input
+                    type="text"
+                    name="url"
+                    value={editFormData.url}
+                    onChange={handleEditFormChange}
+                    placeholder="URL"
+                    required
+                  />
+                  <div className="edit-form-buttons">
+                    <button type="submit">Save</button>
+                    <button type="button" onClick={() => setEditingSocial(null)}>Cancel</button>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="delete-button"
+                    onClick={() => {
+                      handleRemoveSocial(editingSocial.id);
+                      setEditingSocial(null);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </form>
+              ) : (
+                editMode ? (
+                  <button 
+                    className="social-link editable"
+                    aria-label={`Edit ${social.id}`}
+                    onClick={() => handleSocialEdit(social)}
+                  >
+                    {social.icon}
+                    <div className="edit-icon">✏️</div>
+                  </button>
+                ) : (
+                  <a 
+                    href={social.url} 
+                    target="_blank"
+                    rel="noopener noreferrer" 
+                    className="social-link"
+                    aria-label={social.id}
+                  >
+                    {social.icon}
+                  </a>
+                )
+              )}
+            </div>
+          ))}
+          
+          {/* Add New Social Link Button - Only visible in edit mode */}
+          {editMode && (
+            <div className="social-link-wrapper add-new-wrapper">
+              {isCreatingNew ? (
+                <form className="social-edit-form" onSubmit={handleEditFormSubmit} autoComplete="off">
+                  <input
+                    type="text"
+                    name="name"
+                    value={editFormData.name}
+                    onChange={handleEditFormChange}
+                    placeholder="Social name"
+                    required
+                  />
+                  <input
+                    type="text"
+                    name="url"
+                    value={editFormData.url}
+                    onChange={handleEditFormChange}
+                    placeholder="URL"
+                    required
+                  />
+                  <div className="edit-form-buttons">
+                    <button type="submit">Add</button>
+                    <button type="button" onClick={() => setIsCreatingNew(false)}>Cancel</button>
+                  </div>
+                </form>
+              ) : (
+                <button 
+                  className="social-link add-new-button" 
+                  aria-label="Add new social link"
+                  onClick={handleCreateNew}
+                >
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
+                    <line x1="12" y1="5" x2="12" y2="19" strokeWidth="2" strokeLinecap="round"></line>
+                    <line x1="5" y1="12" x2="19" y2="12" strokeWidth="2" strokeLinecap="round"></line>
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="top-area-shade">
@@ -289,98 +782,46 @@ const About = () => {
           </div>
         )}
 
-        {/* About Content Section - Replaces the author section */}
-        <div className="about-content-section">
-          <div className="about-container">
-            <div className="about-header">
-              <h1>About This Portfolio</h1>
-              <div className="about-divider"></div>
-            </div>
-            
-            <div className="about-main-content">
-              <div className="about-section">
-                <h2>🎯 Mission</h2>
-                <p>This portfolio showcases modern web development techniques and creative design principles. Built with cutting-edge technologies to demonstrate proficiency in full-stack development and user experience design.</p>
-              </div>
-
-              <div className="about-section">
-                <h2>🚀 Technologies Used</h2>
-                <div className="tech-grid">
-                  <div className="tech-item">
-                    <span className="tech-icon">⚛️</span>
-                    <span className="tech-name">React</span>
-                  </div>
-                  <div className="tech-item">
-                    <span className="tech-icon">🎨</span>
-                    <span className="tech-name">CSS3</span>
-                  </div>
-                  <div className="tech-item">
-                    <span className="tech-icon">📱</span>
-                    <span className="tech-name">Responsive Design</span>
-                  </div>
-                  <div className="tech-item">
-                    <span className="tech-icon">🌊</span>
-                    <span className="tech-name">CSS Animations</span>
-                  </div>
-                  <div className="tech-item">
-                    <span className="tech-icon">🎮</span>
-                    <span className="tech-name">Spline 3D</span>
-                  </div>
-                  <div className="tech-item">
-                    <span className="tech-icon">💻</span>
-                    <span className="tech-name">Command Line Interface</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="about-section">
-                <h2>✨ Features</h2>
-                <div className="features-list">
-                  <div className="feature-item">
-                    <span className="feature-icon">🔍</span>
-                    <div className="feature-content">
-                      <h3>Interactive Command Line</h3>
-                      <p>Navigate through the portfolio using a command-line interface with autocomplete and suggestions.</p>
-                    </div>
-                  </div>
-                  <div className="feature-item">
-                    <span className="feature-icon">🌐</span>
-                    <div className="feature-content">
-                      <h3>3D Background</h3>
-                      <p>Immersive Spline 3D scenes provide a modern and engaging visual experience.</p>
-                    </div>
-                  </div>
-                  <div className="feature-item">
-                    <span className="feature-icon">🎭</span>
-                    <div className="feature-content">
-                      <h3>Animated Elements</h3>
-                      <p>Smooth CSS animations and transitions create a fluid user experience.</p>
-                    </div>
-                  </div>
-                  <div className="feature-item">
-                    <span className="feature-icon">📱</span>
-                    <div className="feature-content">
-                      <h3>Responsive Design</h3>
-                      <p>Optimized for all devices with mobile-first approach and adaptive layouts.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="about-section">
-                <h2>🎨 Design Philosophy</h2>
-                <p>This portfolio blends modern minimalism with interactive elements, creating an engaging yet professional presentation. The design emphasizes clean typography, thoughtful spacing, and intuitive navigation while showcasing technical capabilities through innovative features like the command-line interface and 3D elements.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
         {/* Command Message */}
         {showCommandMessage && (
           <div className="command-message">
             {commandMessage}
           </div>
         )}
+
+        {/* README Content Display */}
+        <div className="readme-content-section">
+          <div className="readme-container">            
+            <div className="readme-viewer">
+              {readmeLoading ? (
+                <div className="readme-loading">
+                  <div className="loading-spinner"></div>
+                  <p>Loading README...</p>
+                </div>
+              ) : readmeError ? (
+                <div className="readme-error">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  <p>{readmeError}</p>
+                  <button 
+                    className="retry-btn"
+                    onClick={fetchReadme}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <div 
+                  className="readme-content" 
+                  dangerouslySetInnerHTML={{ __html: readme }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Animated Bottom Pattern */}
         <div className="bottom-pattern">

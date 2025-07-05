@@ -29,10 +29,10 @@ const Projects = () => {
 
   // Dropdown items for Windows Explorer style interface
   const dropdownItems = [
-    { id: 1, name: 'Documents', icon: '📄', type: 'folder' },
-    { id: 5, name: 'About', icon: '👤', type: 'action' },
-    { id: 6, name: 'Contact', icon: '📫', type: 'action' },
-    { id: 7, name: 'Home', icon: '🏠', type: 'action' },
+    { id: 1, name: 'About', icon: '👤', type: 'action' },
+    { id: 2, name: 'Contact', icon: '📫', type: 'action' },
+    { id: 3, name: 'Home', icon: '🏠', type: 'action' },
+    { id: 4, name: 'Documents', icon: '📁', type: 'folder' },
   ];
   
   // Command templates for edit mode specific to Projects
@@ -204,6 +204,11 @@ const Projects = () => {
         setCommandInput('');
         setIsDropdownOpen(false);
         navigate('/documents');
+        return;
+      } else if (item.name === 'About') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/about');
         return;
       }
       
@@ -913,6 +918,17 @@ const Projects = () => {
                   onKeyDown={handleCommandSubmit}
                   autoComplete="off"
                 />
+                <span className={`dropdown-indicator ${isDropdownOpen ? 'open' : 'closed'}`}>
+                  {isDropdownOpen ? (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
+                      <polyline points="15,18 9,12 15,6"></polyline>
+                    </svg>
+                  )}
+                </span>
               </div>
             </form>
             
