@@ -4,6 +4,7 @@ import Homepage from './components/Homepage';
 import Documents from './components/Documents';
 import Projects from './components/Projects';
 import About from './components/About';
+import Contacts from './components/Contacts';
 import './App.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route path="/documents" element={<Documents />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contacts" element={<Contacts />} />
         </Routes>
       </Router>
     </div>

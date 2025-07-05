@@ -81,6 +81,8 @@ const About = () => {
         navigate('/documents');
       } else if (item.name === 'Projects') {
         navigate('/projects');
+      } else if (item.name === 'Contact') {
+        navigate('/contacts');
       }
     }
     // Keep dropdown open for command templates in edit mode

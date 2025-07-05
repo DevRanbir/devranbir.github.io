@@ -215,6 +215,11 @@ const Documents = () => {
         setIsDropdownOpen(false);
         navigate('/about');
         return;
+      } else if (item.name === 'Contact') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/contacts');
+        return;
       }
       
       setCommandInput(item.name);

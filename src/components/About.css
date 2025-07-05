@@ -462,8 +462,7 @@
 
 /* Firefox scrollbar styling */
 .readme-viewer {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(135, 206, 235, 0.6) rgba(0, 0, 0, 0);
+  scrollbar-width: none;
 }
 
 /* Mobile Optimization */

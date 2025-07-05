@@ -26,6 +26,7 @@ const Projects = () => {
     dateAdded: new Date().toISOString().split('T')[0]
   });
   const [selectedFilter, setSelectedFilter] = useState('all'); // New state for filtering
+  const [viewMode, setViewMode] = useState('blocks'); // New state for view mode: 'blocks' or 'list'
 
   // Dropdown items for Windows Explorer style interface
   const dropdownItems = [
@@ -44,6 +45,7 @@ const Projects = () => {
     { id: 'batch-remove', template: 'batch-remove [name1] [name2] [name3] ...', description: 'Remove multiple projects' },
     { id: 'batch-remove-all', template: 'batch-remove all', description: 'Remove all projects' },
     { id: 'filter', template: 'filter [type]', description: 'Filter projects by type (all/web/mobile/desktop/ai/blockchain)' },
+    { id: 'view', template: 'view [blocks|list]', description: 'Toggle between blocks and list view' },
     { id: 'exit', template: 'exit', description: 'Exit edit mode' },
   ];
   
@@ -134,6 +136,14 @@ const Projects = () => {
     }
     ];
 
+  // Handle view mode toggle
+  const toggleViewMode = () => {
+    const newViewMode = viewMode === 'blocks' ? 'list' : 'blocks';
+    setViewMode(newViewMode);
+    setCurrentPage(0); // Reset to first page when changing view
+    showMessage(`Switched to ${newViewMode} view`);
+  };
+
   
   const handleInputChange = (e) => {
     setCommandInput(e.target.value);
@@ -209,6 +219,11 @@ const Projects = () => {
         setCommandInput('');
         setIsDropdownOpen(false);
         navigate('/about');
+        return;
+      } else if (item.name === 'Contact') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/contacts');
         return;
       }
       
@@ -354,12 +369,28 @@ const Projects = () => {
           const filterType = matches[1];
           handleFilterClick(filterType);
         }
+        // View command pattern: "view [blocks|list]" - To toggle view mode
+        else if (command.match(/^view\s+(blocks|list)$/)) {
+          const matches = command.match(/^view\s+(blocks|list)$/);
+          const viewType = matches[1];
+          setViewMode(viewType);
+          setCurrentPage(0);
+          showMessage(`Switched to ${viewType} view`);
+        }
       } else {
         // Commands available in normal mode
         if (command.match(/^filter\s+(all|web|mobile|desktop|ai|blockchain)$/)) {
           const matches = command.match(/^filter\s+(all|web|mobile|desktop|ai|blockchain)$/);
           const filterType = matches[1];
           handleFilterClick(filterType);
+        }
+        // View command pattern: "view [blocks|list]" - To toggle view mode
+        else if (command.match(/^view\s+(blocks|list)$/)) {
+          const matches = command.match(/^view\s+(blocks|list)$/);
+          const viewType = matches[1];
+          setViewMode(viewType);
+          setCurrentPage(0);
+          showMessage(`Switched to ${viewType} view`);
         }
       }
       
@@ -748,7 +779,7 @@ const Projects = () => {
   
   // Function to get project icon based on type
   const getProjectIcon = (type) => {
-    const size = 90;
+    const size = viewMode === 'list' ? 40 : 90;
     const color = {
       web: '#00cec9',
       mobile: '#e17055',
@@ -883,7 +914,11 @@ const Projects = () => {
   const filteredProjects = getProjectsByFilter();
   const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
   const startIndex = currentPage * projectsPerPage;
-  const currentProjects = filteredProjects.slice(startIndex, startIndex + projectsPerPage);
+  
+  // For blocks view, use pagination; for list view, show all projects
+  const currentProjects = viewMode === 'blocks' 
+    ? filteredProjects.slice(startIndex, startIndex + projectsPerPage)
+    : filteredProjects;
 
   const nextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -918,17 +953,6 @@ const Projects = () => {
                   onKeyDown={handleCommandSubmit}
                   autoComplete="off"
                 />
-                <span className={`dropdown-indicator ${isDropdownOpen ? 'open' : 'closed'}`}>
-                  {isDropdownOpen ? (
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
-                      <polyline points="6,9 12,15 18,9"></polyline>
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
-                      <polyline points="15,18 9,12 15,6"></polyline>
-                    </svg>
-                  )}
-                </span>
               </div>
             </form>
             
@@ -1013,6 +1037,56 @@ const Projects = () => {
         
         {/* Project Type Filter Links - Vertical Column */}
         <div className="social-links-container">
+          {/* View Toggle Button */}
+          <div className="social-link-wrapper view-toggle-wrapper">
+            <button 
+              className="social-link view-toggle-button"
+              aria-label={`Switch to ${viewMode === 'blocks' ? 'list' : 'blocks'} view`}
+              onClick={toggleViewMode}
+              title={`Switch to ${viewMode === 'blocks' ? 'list' : 'blocks'} view`}
+            >
+              {viewMode === 'blocks' ? (
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="currentColor">
+                  <path opacity="0.5" fillRule="evenodd" clipRule="evenodd" d="M2.25 6C2.25 5.58579 2.58579 5.25 3 5.25H21C21.4142 5.25 21.75 5.58579 21.75 6C21.75 6.41421 21.4142 6.75 21 6.75H3C2.58579 6.75 2.25 6.41421 2.25 6ZM2.25 10C2.25 9.58579 2.58579 9.25 3 9.25H21C21.4142 9.25 21.75 9.58579 21.75 10C21.75 10.4142 21.4142 10.75 21 10.75H3C2.58579 10.75 2.25 10.4142 2.25 10ZM2.25 14C2.25 13.5858 2.58579 13.25 3 13.25H10C10.4142 13.25 10.75 13.5858 10.75 14C10.75 14.4142 10.4142 14.75 10 14.75H3C2.58579 14.75 2.25 14.4142 2.25 14ZM2.25 18C2.25 17.5858 2.58579 17.25 3 17.25H10C10.4142 17.25 10.75 17.5858 10.75 18C10.75 18.4142 10.4142 18.75 10 18.75H3C2.58579 18.75 2.25 18.4142 2.25 18Z" fill="#1C274C"/>
+                  <path d="M13.4306 14.5119C13.7001 14.1974 14.1736 14.161 14.4881 14.4306L17.5 17.0122L20.5119 14.4306C20.8264 14.161 21.2999 14.1974 21.5695 14.5119C21.839 14.8264 21.8026 15.2999 21.4881 15.5695L17.9881 18.5695C17.7072 18.8102 17.2928 18.8102 17.0119 18.5695L13.5119 15.5695C13.1974 15.2999 13.161 14.8264 13.4306 14.5119Z" fill="#1C274C"/>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 72 72" width="24" height="24" stroke="currentColor" fill="currentColor">
+                  <g>
+                    <g>
+                      <path d="M67.5,27.568c0,3.828-3.104,6.932-6.932,6.932H10.432c-3.828,0-6.932-3.104-6.932-6.932V10.432
+                        C3.5,6.604,6.604,3.5,10.432,3.5h50.137c3.828,0,6.932,3.104,6.932,6.932V27.568z M63.5,10.432c0-1.619-1.313-2.932-2.932-2.932
+                        H10.432C8.813,7.5,7.5,8.813,7.5,10.432v17.137c0,1.619,1.313,2.932,2.932,2.932h50.137c1.619,0,2.932-1.313,2.932-2.932V10.432z"
+                        />
+                    </g>
+                    <g>
+                      <g>
+                        <path d="M11.5,19.5c-0.553,0-1-0.447-1-1v-1.802c0-2.556,1.246-5.198,3.96-5.198h6.664c0.553,0,1,0.447,1,1s-0.447,1-1,1H14.46
+                          c-1.462,0-1.96,1.626-1.96,3.198V18.5C12.5,19.053,12.052,19.5,11.5,19.5z"/>
+                      </g>
+                      <g>
+                        <path d="M10.694,22.93c-0.26,0-0.521-0.11-0.71-0.29c-0.19-0.189-0.29-0.45-0.29-0.71s0.1-0.52,0.29-0.71
+                          c0.38-0.38,1.04-0.37,1.41,0c0.189,0.19,0.3,0.45,0.3,0.71s-0.11,0.521-0.29,0.7C11.204,22.819,10.954,22.93,10.694,22.93z"/>
+                      </g>
+                    </g>
+                    <g>
+                      <path d="M46.5,61.568c0,3.828-3.104,6.932-6.932,6.932H10.432c-3.828,0-6.932-3.104-6.932-6.932V44.432
+                        c0-3.828,3.104-6.932,6.932-6.932h29.137c3.828,0,6.932,3.104,6.932,6.932V61.568z M42.5,44.432c0-1.619-1.313-2.932-2.932-2.932
+                        H10.432c-1.619,0-2.932,1.313-2.932,2.932v17.137c0,1.619,1.313,2.932,2.932,2.932h29.137c1.619,0,2.932-1.313,2.932-2.932V44.432
+                        z"/>
+                    </g>
+                    <g>
+                      <path d="M68.5,61.568c0,3.828-3.104,6.932-6.932,6.932h-5.137c-3.828,0-6.932-3.104-6.932-6.932V44.432
+                        c0-3.828,3.104-6.932,6.932-6.932h5.137c3.828,0,6.932,3.104,6.932,6.932V61.568z M64.5,44.432c0-1.619-1.313-2.932-2.932-2.932
+                        h-5.137c-1.619,0-2.932,1.313-2.932,2.932v17.137c0,1.619,1.313,2.932,2.932,2.932h5.137c1.619,0,2.932-1.313,2.932-2.932V44.432z
+                        "/>
+                    </g>
+                  </g>
+                </svg>
+              )}
+            </button>
+          </div>
+          
           {filterLinks.map((filter) => (
             <div key={filter.id} className={`social-link-wrapper ${selectedFilter === filter.type ? 'active' : ''}`}>
               <button 
@@ -1105,11 +1179,14 @@ const Projects = () => {
           
           {filteredProjects.length > 0 && (
             <div className="pagination-info">
-              <span>Showing {currentProjects.length} of {filteredProjects.length} projects{selectedFilter !== 'all' ? ` (${selectedFilter.toUpperCase()} filter)` : ''}</span>
+              <span>Showing {currentProjects.length} of {filteredProjects.length} projects{selectedFilter !== 'all' ? ` (${selectedFilter.toUpperCase()} filter)` : ''}
+                {' - '}
+                <span className="view-mode-indicator">{viewMode === 'blocks' ? 'Blocks View' : 'List View'}</span>
+              </span>
             </div>
           )}
           
-          <div className="projects-list">
+          <div className={`projects-list ${viewMode === 'list' ? 'list-view' : 'blocks-view'}`}>
             {currentProjects.length > 0 ? (
               currentProjects.map((project) => (
                 <div 
@@ -1132,6 +1209,12 @@ const Projects = () => {
                     {project.description && (
                       <div className="project-description">
                         {project.description}
+                      </div>
+                    )}
+                    {viewMode === 'list' && (
+                      <div className="project-meta">
+                        <span className="project-type">{project.type}</span>
+                        {project.dateAdded && <span className="project-date"> • Added {project.dateAdded}</span>}
                       </div>
                     )}
                   </div>
@@ -1203,7 +1286,7 @@ const Projects = () => {
           </div>
           
           {/* Pagination Controls */}
-          {filteredProjects.length > projectsPerPage && (
+          {viewMode === 'blocks' && filteredProjects.length > projectsPerPage && (
             <div className="pagination-controls">
               <button 
                 className="pagination-btn" 
