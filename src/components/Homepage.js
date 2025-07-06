@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
+import { 
+  getHomepageData, 
+  updateSocialLinks, 
+  updateAuthorDescription, 
+  updateAuthorSkills,
+  subscribeToHomepageData,
+  initializeHomepageData
+} from '../firebase/firestoreService';
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -14,20 +22,12 @@ const Homepage = () => {
   const [editingSocial, setEditingSocial] = useState(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [editingAuthor, setEditingAuthor] = useState(false);
-  const [authorDescription, setAuthorDescription] = useState("Full-stack developer passionate about creating beautiful web experiences. Specializing in React, Node.js, and modern JavaScript frameworks to build responsive and intuitive applications.");
+  const [authorDescription, setAuthorDescription] = useState("");
   const [tempAuthorDescription, setTempAuthorDescription] = useState("");
-  const [authorSkills, setAuthorSkills] = useState([
-    'JavaScript', 'React', 'Node.js', 'Python', 'C++', 'HTML/CSS', 'MongoDB', 'Express.js'
-  ]);
+  const [authorSkills, setAuthorSkills] = useState([]);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [newSkillInput, setNewSkillInput] = useState('');
-  const [socialLinks, setSocialLinks] = useState([
-    { id: 'github', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>, url: 'https://github.com/yourname' },
-    { id: 'linkedin', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>, url: 'https://linkedin.com/in/yourname' },
-    { id: 'twitter', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>, url: 'https://twitter.com/yourname' },
-    { id: 'instagram', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>, url: 'https://instagram.com/yourname' },
-    { id: 'mail', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, url: 'mailto:your.email@example.com' },
-  ]);
+  const [socialLinks, setSocialLinks] = useState([]);
   const [editFormData, setEditFormData] = useState({
     name: '',
     iconType: '',
@@ -36,6 +36,11 @@ const Homepage = () => {
   const [commandMessage, setCommandMessage] = useState('');
   const [showCommandMessage, setShowCommandMessage] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Firestore subscription unsubscribe function
+  const [unsubscribe, setUnsubscribe] = useState(null);
 
   // Dummy dropdown items for Windows Explorer style interface
   const dropdownItems = [
@@ -284,8 +289,7 @@ const Homepage = () => {
       [name]: value
     });
   };
-  
-  const handleEditFormSubmit = (e) => {
+    const handleEditFormSubmit = async (e) => {
     e.preventDefault();
     
     let updatedLinks;
@@ -293,10 +297,8 @@ const Homepage = () => {
     
     if (isCreatingNew) {
       // Creating a new social link
-      const newIcon = getDefaultIcon(editFormData.name);
       const newSocial = {
         id: editFormData.name.toLowerCase(),
-        icon: newIcon,
         url: editFormData.url
       };
       
@@ -308,8 +310,7 @@ const Homepage = () => {
       updatedLinks = socialLinks.map(link => 
         link.id === editingSocial.id ? 
         { 
-          ...link, 
-          id: editFormData.name,
+          id: editFormData.name.toLowerCase(),
           url: editFormData.url
         } : 
         link
@@ -317,9 +318,8 @@ const Homepage = () => {
       actionMessage = `"${oldName}" link has been updated to "${editFormData.name}".`;
     }
     
-    // Update the links
-    setSocialLinks(updatedLinks);
-    console.log('Updated social links:', updatedLinks);
+    // Save to Firestore
+    await saveDataToFirestore('socialLinks', updatedLinks);
     
     // Show success message
     showMessage(actionMessage);
@@ -328,11 +328,14 @@ const Homepage = () => {
     setEditingSocial(null);
     setIsCreatingNew(false);
   };
-  
-  const handleRemoveSocial = (socialId) => {
+
+  const handleRemoveSocial = async (socialId) => {
     const link = socialLinks.find(link => link.id === socialId);
     const updatedLinks = socialLinks.filter(link => link.id !== socialId);
-    setSocialLinks(updatedLinks);
+    
+    // Save to Firestore
+    await saveDataToFirestore('socialLinks', updatedLinks);
+    
     if (link) {
       showMessage(`The "${link.id}" link has been removed.`);
     }
@@ -348,9 +351,39 @@ const Homepage = () => {
       setShowCommandMessage(false);
     }, 3000);
   };
+
+  // Save updated data to Firestore
+  const saveDataToFirestore = async (key, data) => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      switch (key) {
+        case 'socialLinks':
+          await updateSocialLinks(data);
+          break;
+        case 'authorDescription':
+          await updateAuthorDescription(data);
+          break;
+        case 'authorSkills':
+          await updateAuthorSkills(data);
+          break;
+        default:
+          throw new Error(`Invalid data key: ${key}`);
+      }
+      
+      showMessage(`${key} updated successfully!`);
+    } catch (err) {
+      console.error(`Error updating ${key}:`, err);
+      setError(`Failed to update ${key}: ${err.message}`);
+      showMessage(`Error: Failed to update ${key}`);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Command handlers for social link operations
-  const handleCommandCreateLink = (name, url) => {
+  const handleCommandCreateLink = async (name, url) => {
     // Check if a link with this name already exists
     const exists = socialLinks.some(link => link.id.toLowerCase() === name.toLowerCase());
     if (exists) {
@@ -358,20 +391,19 @@ const Homepage = () => {
       return;
     }
     
-    // Create the new link directly
-    const newIcon = getDefaultIcon(name);
+    // Create the new link
     const newSocial = {
       id: name.toLowerCase(),
-      icon: newIcon,
       url: url
     };
     
     const updatedLinks = [...socialLinks, newSocial];
-    setSocialLinks(updatedLinks);
-    showMessage(`New "${name}" link has been added.`);
+    
+    // Save to Firestore
+    await saveDataToFirestore('socialLinks', updatedLinks);
   };
   
-  const handleCommandRemoveLink = (name) => {
+  const handleCommandRemoveLink = async (name) => {
     // Find the link with the given name
     const link = socialLinks.find(link => link.id.toLowerCase() === name.toLowerCase());
     if (!link) {
@@ -380,12 +412,14 @@ const Homepage = () => {
     }
     
     if (window.confirm(`Are you sure you want to remove the "${name}" link?`)) {
-      handleRemoveSocial(link.id);
-      showMessage(`The "${name}" link has been removed.`);
+      const updatedLinks = socialLinks.filter(link => link.id.toLowerCase() !== name.toLowerCase());
+      
+      // Save to Firestore
+      await saveDataToFirestore('socialLinks', updatedLinks);
     }
   };
   
-  const handleCommandEditLink = (oldName, oldLink, newName, newLink) => {
+  const handleCommandEditLink = async (oldName, oldLink, newName, newLink) => {
     // Find the link with the given name
     const link = socialLinks.find(link => link.id.toLowerCase() === oldName.toLowerCase());
     if (!link) {
@@ -399,20 +433,18 @@ const Homepage = () => {
       return;
     }
     
-    // Update the link directly
+    // Update the link
     const updatedLinks = socialLinks.map(l => 
       l.id.toLowerCase() === oldName.toLowerCase() 
         ? { 
-            ...l, 
             id: newName.toLowerCase(),
-            url: newLink,
-            icon: getDefaultIcon(newName) // Update icon based on new name
+            url: newLink
           } 
         : l
     );
     
-    setSocialLinks(updatedLinks);
-    showMessage(`"${oldName}" link has been updated to "${newName}".`);
+    // Save to Firestore
+    await saveDataToFirestore('socialLinks', updatedLinks);
   };
   
   const handleExitEditMode = () => {
@@ -431,15 +463,15 @@ const Homepage = () => {
     showMessage("Author edit mode activated. Click the edit button in the author section.");
   };
 
-  const handleAuthorEditDirect = (newDescription) => {
-    setAuthorDescription(newDescription);
-    showMessage(`Author description updated to: "${newDescription}"`);
+  const handleAuthorEditDirect = async (newDescription) => {
+    // Save to Firestore
+    await saveDataToFirestore('authorDescription', newDescription);
   };
 
-  const handleAuthorSave = () => {
-    setAuthorDescription(tempAuthorDescription);
+  const handleAuthorSave = async () => {
+    // Save to Firestore
+    await saveDataToFirestore('authorDescription', tempAuthorDescription);
     setEditingAuthor(false);
-    showMessage("Author description updated successfully!");
   };
 
   const handleAuthorCancel = () => {
@@ -448,7 +480,7 @@ const Homepage = () => {
     showMessage("Author edit cancelled.");
   };
 
-  const handleAddSkill = (skillName) => {
+  const handleAddSkill = async (skillName) => {
     // Check if skill already exists (case insensitive)
     const exists = authorSkills.some(skill => skill.toLowerCase() === skillName.toLowerCase());
     if (exists) {
@@ -457,11 +489,12 @@ const Homepage = () => {
     }
     
     const updatedSkills = [...authorSkills, skillName];
-    setAuthorSkills(updatedSkills);
-    showMessage(`Skill "${skillName}" added successfully!`);
+    
+    // Save to Firestore
+    await saveDataToFirestore('authorSkills', updatedSkills);
   };
 
-  const handleRemoveSkill = (skillName) => {
+  const handleRemoveSkill = async (skillName) => {
     // Find skill (case insensitive)
     const skillIndex = authorSkills.findIndex(skill => skill.toLowerCase() === skillName.toLowerCase());
     if (skillIndex === -1) {
@@ -469,17 +502,20 @@ const Homepage = () => {
       return;
     }
     
-    if (window.confirm(`Are you sure you want to remove the "${authorSkills[skillIndex]}" skill?`)) {
+    const skillToRemove = authorSkills[skillIndex];
+    
+    if (window.confirm(`Are you sure you want to remove the "${skillToRemove}" skill?`)) {
       const updatedSkills = authorSkills.filter((_, index) => index !== skillIndex);
-      setAuthorSkills(updatedSkills);
-      showMessage(`Skill "${authorSkills[skillIndex]}" removed successfully!`);
+      
+      // Save to Firestore
+      await saveDataToFirestore('authorSkills', updatedSkills);
     }
   };
 
-  const handleSkillInputSubmit = (e) => {
+  const handleSkillInputSubmit = async (e) => {
     e.preventDefault();
     if (newSkillInput.trim()) {
-      handleAddSkill(newSkillInput.trim());
+      await handleAddSkill(newSkillInput.trim());
       setNewSkillInput('');
       setIsAddingSkill(false);
     }
@@ -490,7 +526,7 @@ const Homepage = () => {
     setIsAddingSkill(false);
   };
 
-  const handleEditSkill = (oldSkillName, newSkillName) => {
+  const handleEditSkill = async (oldSkillName, newSkillName) => {
     // Find skill (case insensitive)
     const skillIndex = authorSkills.findIndex(skill => skill.toLowerCase() === oldSkillName.toLowerCase());
     if (skillIndex === -1) {
@@ -510,8 +546,9 @@ const Homepage = () => {
     // Update the skill
     const updatedSkills = [...authorSkills];
     updatedSkills[skillIndex] = newSkillName;
-    setAuthorSkills(updatedSkills);
-    showMessage(`Skill "${oldSkillName}" updated to "${newSkillName}" successfully!`);
+    
+    // Save to Firestore
+    await saveDataToFirestore('authorSkills', updatedSkills);
   };
   
   // Effect for handling edit command - Removed since it's now handled in handleCommandSubmit
@@ -558,41 +595,61 @@ const Homepage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Load social links from localStorage on initial render
+  // Load homepage data from Firestore and set up real-time listener
   useEffect(() => {
-    const savedLinks = localStorage.getItem('socialLinks');
-    const savedAuthorDescription = localStorage.getItem('authorDescription');
-    
-    if (savedLinks) {
+    const initializeData = async () => {
       try {
-        // Need to parse the JSON and reconstruct the JSX for icons
-        const parsedLinks = JSON.parse(savedLinks);
-        const reconstructedLinks = parsedLinks.map(link => {
-          return {
-            ...link,
-            icon: getDefaultIcon(link.id) // Re-create the icon JSX
-          };
+        setLoading(true);
+        setError('');
+        
+        // Initialize Firestore data if it doesn't exist
+        await initializeHomepageData();
+        
+        // Set up real-time subscription
+        const unsubscribeFn = subscribeToHomepageData((data) => {
+          console.log('Homepage data updated from Firestore:', data);
+          
+          // Update social links with reconstructed icons
+          if (data.socialLinks) {
+            const linksWithIcons = data.socialLinks.map(link => ({
+              ...link,
+              icon: getDefaultIcon(link.id)
+            }));
+            setSocialLinks(linksWithIcons);
+          }
+          
+          // Update author description
+          if (data.authorDescription) {
+            setAuthorDescription(data.authorDescription);
+          }
+          
+          // Update author skills
+          if (data.authorSkills) {
+            setAuthorSkills(data.authorSkills);
+          }
+          
+          setLoading(false);
         });
-        setSocialLinks(reconstructedLinks);
-      } catch (error) {
-        console.error('Error loading social links from localStorage:', error);
+        
+        // Store the unsubscribe function
+        setUnsubscribe(() => unsubscribeFn);
+        
+      } catch (err) {
+        console.error('Error initializing homepage data:', err);
+        setError(`Failed to load homepage data: ${err.message}`);
+        setLoading(false);
       }
-    }
-
-    if (savedAuthorDescription) {
-      setAuthorDescription(savedAuthorDescription);
-    }
-
-    const savedSkills = localStorage.getItem('authorSkills');
-    if (savedSkills) {
-      try {
-        const parsedSkills = JSON.parse(savedSkills);
-        setAuthorSkills(parsedSkills);
-      } catch (error) {
-        console.error('Error loading skills from localStorage:', error);
+    };
+    
+    initializeData();
+    
+    // Cleanup function
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
       }
-    }
-  }, []);
+    };
+  }, []); // Empty dependency array to run only once
 
   // Handle "/" key press to focus command line
   useEffect(() => {
@@ -615,26 +672,6 @@ const Homepage = () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
   }, []);
-  
-  // Save social links to localStorage whenever they change
-  useEffect(() => {
-    if (socialLinks.length > 0) {
-      // We need to serialize the links without the JSX icons
-      const serializableLinks = socialLinks.map(({ id, url }) => ({ id, url }));
-      localStorage.setItem('socialLinks', JSON.stringify(serializableLinks));
-    }
-  }, [socialLinks]);
-
-  // Save author description to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('authorDescription', authorDescription);
-  }, [authorDescription]);
-
-  // Save author skills to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('authorSkills', JSON.stringify(authorSkills));
-  }, [authorSkills]);
-  
   // Function to get default icon based on social media name
   const getDefaultIcon = (name) => {
     const iconName = name.toLowerCase();
