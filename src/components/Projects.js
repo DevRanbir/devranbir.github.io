@@ -149,6 +149,27 @@ const Projects = () => {
     setCommandInput(e.target.value);
     setIsDropdownOpen(e.target.value.length > 0);
   };
+
+  useEffect(() => {
+      const handleKeyPress = (event) => {
+        // Check if "/" is pressed and no input/textarea is currently focused
+        if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+          event.preventDefault();
+          const commandInput = document.querySelector('.command-input');
+          if (commandInput) {
+            commandInput.focus();
+          }
+        }
+      };
+  
+      // Add event listener to document
+      document.addEventListener('keydown', handleKeyPress);
+  
+      // Cleanup event listener
+      return () => {
+        document.removeEventListener('keydown', handleKeyPress);
+      };
+    }, []);
   
   // Function to filter projects based on search query
   const getFilteredProjects = () => {
@@ -265,6 +286,44 @@ const Projects = () => {
         setIsDropdownOpen(false);
         // Already on projects page, just show message
         showMessage('You are already on the Projects page.');
+        return;
+      } else if (command === 'about') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/about');
+        return;
+      } else if (command === 'contacts') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/contacts');
+        return;
+      }
+      
+      // Single letter navigation shortcuts
+      else if (command === 'h' ) {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/');
+        return;
+      } else if (command === 'd') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/documents');
+        return;
+      } else if (command === 'p') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        showMessage('You are already on the Projects page.');
+        return;
+      } else if (command === 'a') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/about');
+        return;
+      } else if (command === 'c') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/contacts');
         return;
       }
       
@@ -801,15 +860,14 @@ const Projects = () => {
 
       case 'mobile':
         return (
-          <svg width={size} height={size} viewBox="0 0 21 32" stroke={color.mobile} fill="none">
-            <g>
-              <path fill="#808184" d="M1.5,32h18c0.827,0,1.5-0.673,1.5-1.5v-29C21,0.673,20.327,0,19.5,0h-18C0.673,0,0,0.673,0,1.5v29
-                C0,31.327,0.673,32,1.5,32z M1,1.5C1,1.224,1.224,1,1.5,1h18C19.776,1,20,1.224,20,1.5v29c0,0.276-0.224,0.5-0.5,0.5h-18
-                C1.224,31,1,30.776,1,30.5V1.5z"/>
-              <path fill="#808184" d="M10.179,28.137c1.103,0,2-0.897,2-2s-0.897-2-2-2s-2,0.897-2,2S9.076,28.137,10.179,28.137z M10.179,25.137
-                c0.551,0,1,0.449,1,1s-0.449,1-1,1s-1-0.449-1-1S9.628,25.137,10.179,25.137z"/>
-              <path fill="#808184" d="M9,4h3c0.276,0,0.5-0.224,0.5-0.5S12.276,3,12,3H9C8.724,3,8.5,3.224,8.5,3.5S8.724,4,9,4z"/>
-            </g>
+          <svg width={size} height={size} viewBox="0 0 32 32" stroke={color.mobile} fill="none">
+            <path class="st0" d="M19,23v4c0,1.1-0.9,2-2,2H7c-1.1,0-2-0.9-2-2V5c0-1.1,0.9-2,2-2h10c1.1,0,2,0.9,2,2v2"/>
+            <line class="st0" x1="5" y1="7" x2="19" y2="7"/>
+            <line class="st0" x1="5" y1="23" x2="19" y2="23"/>
+            <line class="st0" x1="11" y1="26" x2="13" y2="26"/>
+            <polyline class="st0" points="14,12 11,15 14,18 "/>
+            <polyline class="st0" points="24,12 27,15 24,18 "/>
+            <line class="st0" x1="21" y1="11" x2="17" y2="19"/>
           </svg>
         );
 
@@ -953,6 +1011,17 @@ const Projects = () => {
                   onKeyDown={handleCommandSubmit}
                   autoComplete="off"
                 />
+                <span className={`dropdown-indicator ${isDropdownOpen ? 'open' : 'closed'}`}>
+                  {isDropdownOpen ? (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2">
+                      <polyline points="15,18 9,12 15,6"></polyline>
+                    </svg>
+                  )}
+                </span>
               </div>
             </form>
             

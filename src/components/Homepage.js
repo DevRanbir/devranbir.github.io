@@ -125,6 +125,34 @@ const Homepage = () => {
         return;
       }
       
+      // Single letter navigation shortcuts
+      else if (command === 'h') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/');
+        return;
+      } else if (command === 'd') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/documents');
+        return;
+      } else if (command === 'p') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/projects');
+        return;
+      } else if (command === 'a') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/about');
+        return;
+      } else if (command === 'c') {
+        setCommandInput('');
+        setIsDropdownOpen(false);
+        navigate('/contacts');
+        return;
+      }
+      
       if (command === 'edit') {
         setShowPasswordModal(true);
       } else if (editMode) {
@@ -550,6 +578,28 @@ const Homepage = () => {
         console.error('Error loading skills from localStorage:', error);
       }
     }
+  }, []);
+
+  // Handle "/" key press to focus command line
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // Check if "/" is pressed and no input/textarea is currently focused
+      if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        event.preventDefault();
+        const commandInput = document.querySelector('.command-input');
+        if (commandInput) {
+          commandInput.focus();
+        }
+      }
+    };
+
+    // Add event listener to document
+    document.addEventListener('keydown', handleKeyPress);
+
+    // Cleanup event listener
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
   }, []);
   
   // Save social links to localStorage whenever they change

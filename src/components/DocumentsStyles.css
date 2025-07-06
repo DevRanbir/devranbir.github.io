@@ -846,3 +846,7 @@
 .social-links-container {
   margin-top: 20px;
 }
+
+.documents-list.list-view .empty-state{
+  transform: translateX(45%) !important;
+}
