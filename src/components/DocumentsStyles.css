@@ -501,7 +501,7 @@
   padding: 8px 16px;
   font-size: 11px;
   font-weight: 600;
-  color: #0078ff;
+  color: #be00ff;
   background: linear-gradient(135deg, rgba(0, 120, 255, 0.08), rgba(0, 120, 255, 0.03));
   border-radius: 6px;
   margin-bottom: 8px;
@@ -677,7 +677,7 @@
 }
 
 .list-view .document-item:hover {
-  border-color: rgba(0, 120, 255, 0.3);
+  border-color: #be00ff;
 }
 
 .list-view .document-icon {
@@ -722,8 +722,8 @@
 }
 
 .list-view .document-type {
-  background: rgba(0, 120, 255, 0.2);
-  color: rgba(0, 120, 255, 0.9);
+  background: rgb(3, 3, 3);
+  color: #be00ff;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 10px;

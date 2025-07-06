@@ -1,0 +1,141 @@
+/* Controller-specific styles - extends Homepage.css */
+
+.controller-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+}
+
+.controller-header h2 {
+  color: #fff;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.controller-header p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.admin-section, .navigation-section {
+  margin-bottom: 30px;
+}
+
+.admin-section h4, .navigation-section h4 {
+  color: #fff;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.admin-section h4::before {
+  content: '⚙️ ';
+  margin-right: 8px;
+}
+
+.navigation-section h4::before {
+  content: '🧭 ';
+  margin-right: 8px;
+}
+
+/* Enhanced command template styles for admin */
+.command-template {
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.command-template:hover {
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Admin prompt symbol styling */
+.prompt-symbol {
+  color: #ffd700;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Command message styling for admin */
+.command-message {
+  background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Enhanced glass panel for controller */
+.controller-header + form .glass-panel {
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+/* Controller-specific dropdown panel */
+.controller-dropdown-panel {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for dropdown */
+.controller-dropdown-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.controller-dropdown-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.controller-dropdown-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.6);
+  border-radius: 4px;
+}
+
+.controller-dropdown-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.8);
+}
+
+/* Admin status indicator */
+.admin-status {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  z-index: 1000;
+}
+
+/* Enhanced password modal for controller */
+.password-modal h3 {
+  color: #ffd700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.password-modal p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.password-submit-btn {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #000;
+  font-weight: 600;
+}
+
+.password-submit-btn:hover {
+  background: linear-gradient(45deg, #ffed4e, #ffd700);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}

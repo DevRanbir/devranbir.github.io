@@ -21,10 +21,12 @@ const Projects = () => {
   const [projectFormData, setProjectFormData] = useState({
     name: '',
     type: '',
-    url: '',
+    repoUrl: '',
+    liveUrl: '',
     description: '',
     dateAdded: new Date().toISOString().split('T')[0]
   });
+  const [showProjectOptions, setShowProjectOptions] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState('all'); // New state for filtering
   const [viewMode, setViewMode] = useState('blocks'); // New state for view mode: 'blocks' or 'list'
 
@@ -38,8 +40,8 @@ const Projects = () => {
   
   // Command templates for edit mode specific to Projects
   const commandTemplates = [
-    { id: 'add', template: 'add [type] [name] [url] [description]', description: 'Add a new project' },
-    { id: 'batch-add', template: 'batch-add [type1] [name1] [url1] [desc1] | [type2] [name2] [url2] [desc2] | ...', description: 'Add multiple projects' },
+    { id: 'add', template: 'add [type] [name] [repo_url] [live_url] [description]', description: 'Add a new project' },
+    { id: 'batch-add', template: 'batch-add [type1] [name1] [repo1] [live1] [desc1] | [type2] [name2] [repo2] [live2] [desc2] | ...', description: 'Add multiple projects' },
     { id: 'edit', template: 'edit [oldtype] [oldname] - [newtype] [newname] [newdesc]', description: 'Edit project' },
     { id: 'remove', template: 'remove [name]', description: 'Remove a project' },
     { id: 'batch-remove', template: 'batch-remove [name1] [name2] [name3] ...', description: 'Remove multiple projects' },
@@ -150,26 +152,32 @@ const Projects = () => {
     setIsDropdownOpen(e.target.value.length > 0);
   };
 
+  // Handle "/" key press to focus command line and close project options
   useEffect(() => {
-      const handleKeyPress = (event) => {
-        // Check if "/" is pressed and no input/textarea is currently focused
-        if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
-          event.preventDefault();
-          const commandInput = document.querySelector('.command-input');
-          if (commandInput) {
-            commandInput.focus();
-          }
+    const handleKeyPress = (event) => {
+      // Check if "/" is pressed and no input/textarea is currently focused
+      if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        event.preventDefault();
+        const commandInput = document.querySelector('.command-input');
+        if (commandInput) {
+          commandInput.focus();
         }
-      };
-  
-      // Add event listener to document
-      document.addEventListener('keydown', handleKeyPress);
-  
-      // Cleanup event listener
-      return () => {
-        document.removeEventListener('keydown', handleKeyPress);
-      };
-    }, []);
+      }
+      
+      // Close project options on Escape key
+      if (event.key === 'Escape' && showProjectOptions) {
+        setShowProjectOptions(null);
+      }
+    };
+
+    // Add event listener to document
+    document.addEventListener('keydown', handleKeyPress);
+
+    // Cleanup event listener
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [showProjectOptions]);
   
   // Function to filter projects based on search query
   const getFilteredProjects = () => {
@@ -215,9 +223,9 @@ const Projects = () => {
     if (editMode && typeof item === 'object' && 'template' in item) {
       // This is a command template
       setCommandInput(item.template);
-    } else if (typeof item === 'object' && 'id' in item && 'name' in item && 'type' in item && 'url' in item) {
-      // This is a project search result (must have a url property)
-      window.open(item.url, '_blank');
+    } else if (typeof item === 'object' && 'id' in item && 'name' in item && 'type' in item && ('repoUrl' in item || 'liveUrl' in item)) {
+      // This is a project search result - show options instead of directly opening
+      handleProjectClick(item);
       setCommandInput('');
       setIsDropdownOpen(false);
       return;
@@ -329,20 +337,35 @@ const Projects = () => {
       
       if (command === 'edit') {
         setShowPasswordModal(true);
+      } else if (command.match(/^edit\s+(.+)\.$/)) {
+        // Handle "edit [password]." format - password must end with a period
+        const matches = command.match(/^edit\s+(.+)\.$/);
+        const password = matches[1];
+        const correctPassword = 'ranbir195'; // Same password as in validatePassword
+        
+        if (password === correctPassword) {
+          setEditMode(true);
+          setCommandInput('');
+          setIsDropdownOpen(true);
+          showMessage("Edit mode activated!");
+        } else {
+          showMessage("Incorrect password. Access denied.");
+        }
       } else if (editMode) {
         // Process commands only available in edit mode
         
-        // Command pattern: "add [type] [name] [url] [description]" - To add a new project
-        if (command.match(/^add\s+(web|mobile|desktop|ai|blockchain)\s+([^\s]+)\s+([^\s]+)(?:\s+(.*))?$/)) {
-          const matches = command.match(/^add\s+(web|mobile|desktop|ai|blockchain)\s+([^\s]+)\s+([^\s]+)(?:\s+(.*))?$/);
+        // Command pattern: "add [type] [name] [repo_url] [live_url] [description]" - To add a new project
+        if (command.match(/^add\s+(web|mobile|desktop|ai|blockchain)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)(?:\s+(.*))?$/)) {
+          const matches = command.match(/^add\s+(web|mobile|desktop|ai|blockchain)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)(?:\s+(.*))?$/);
           const type = matches[1];
           const name = matches[2];
-          const url = matches[3];
-          const description = matches[4] || '';
+          const repoUrl = matches[3];
+          const liveUrl = matches[4];
+          const description = matches[5] || '';
           
-          handleAddProject(name, type, url, description);
+          handleAddProject(name, type, repoUrl, liveUrl, description);
         }
-        // Command pattern: "batch-add [type1] [name1] [url1] [desc1] | [type2] [name2] [url2] [desc2] | ..." - To add multiple projects
+        // Command pattern: "batch-add [type1] [name1] [repo1] [live1] [desc1] | [type2] [name2] [repo2] [live2] [desc2] | ..." - To add multiple projects
         else if (command.match(/^batch-add\s+(.+)$/)) {
           const matches = command.match(/^batch-add\s+(.+)$/);
           const projectsString = matches[1];
@@ -352,13 +375,14 @@ const Projects = () => {
           const projectsData = [];
           
           projectEntries.forEach(entry => {
-            const entryMatch = entry.match(/^(web|mobile|desktop|ai|blockchain)\s+([^\s]+)\s+([^\s]+)(?:\s+(.*))?$/);
+            const entryMatch = entry.match(/^(web|mobile|desktop|ai|blockchain)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)(?:\s+(.*))?$/);
             if (entryMatch) {
               projectsData.push({
                 type: entryMatch[1],
                 name: entryMatch[2],
-                url: entryMatch[3],
-                description: entryMatch[4] || ''
+                repoUrl: entryMatch[3],
+                liveUrl: entryMatch[4],
+                description: entryMatch[5] || ''
               });
             }
           });
@@ -366,7 +390,7 @@ const Projects = () => {
           if (projectsData.length > 0) {
             handleBatchAddProjects(projectsData);
           } else {
-            showMessage("Invalid batch-add format. Use: batch-add type1 name1 url1 desc1 | type2 name2 url2 desc2");
+            showMessage("Invalid batch-add format. Use: batch-add type1 name1 repo1 live1 desc1 | type2 name2 repo2 live2 desc2");
           }
         }
         // Command pattern: "edit [oldtype] [oldname] - [newtype] [newname] [newdesc]" - To edit an existing project
@@ -477,16 +501,24 @@ const Projects = () => {
   };
   
   // Project management functions
-  const handleAddProject = (name, type, url, description = '') => {
-    // Ensure URL has proper protocol
-    const validUrl = ensureValidUrl(url);
+  const handleAddProject = (name, type, repoUrl, liveUrl, description = '') => {
+    // Validate that at least one URL is provided
+    if (!repoUrl && !liveUrl) {
+      showMessage("At least one URL (Repository or Live Demo) is required.");
+      return;
+    }
+    
+    // Ensure URLs have proper protocol
+    const validRepoUrl = repoUrl ? ensureValidUrl(repoUrl) : '';
+    const validLiveUrl = liveUrl ? ensureValidUrl(liveUrl) : '';
     
     const newId = Math.max(...projects.map(project => project.id), 0) + 1;
     const newProject = {
       id: newId,
       name: name,
       type: type || 'web', // Use provided type or default to web
-      url: validUrl,
+      repoUrl: validRepoUrl,
+      liveUrl: validLiveUrl,
       description: description,
       dateAdded: new Date().toISOString().split('T')[0]
     };
@@ -544,16 +576,18 @@ const Projects = () => {
     let addedCount = 0;
     const updatedProjects = [...projects];
     
-    projectsData.forEach(({ type, name, url, description }) => {
-      if (type && name && url) {
-        const validUrl = ensureValidUrl(url);
+    projectsData.forEach(({ type, name, repoUrl, liveUrl, description }) => {
+      if (type && name && (repoUrl || liveUrl)) {
+        const validRepoUrl = repoUrl ? ensureValidUrl(repoUrl) : '';
+        const validLiveUrl = liveUrl ? ensureValidUrl(liveUrl) : '';
         const newId = Math.max(...updatedProjects.map(project => project.id), 0) + 1 + addedCount;
         
         const newProject = {
           id: newId,
           name: name,
           type: type,
-          url: validUrl,
+          repoUrl: validRepoUrl,
+          liveUrl: validLiveUrl,
           description: description || '',
           dateAdded: new Date().toISOString().split('T')[0]
         };
@@ -568,7 +602,7 @@ const Projects = () => {
       localStorage.setItem('projects', JSON.stringify(updatedProjects));
       showMessage(`Successfully added ${addedCount} project(s)!`);
     } else {
-      showMessage("No valid projects to add. Check your format.");
+      showMessage("No valid projects to add. At least one URL (repo or live) is required for each project.");
     }
   };
 
@@ -616,6 +650,26 @@ const Projects = () => {
     setIsAddingProject(false);
     showMessage("Exited edit mode.");
   };
+
+  // Handle project click to show options
+  const handleProjectClick = (project) => {
+    setShowProjectOptions(project);
+  };
+
+  // Handle project option selection
+  const handleProjectOptionClick = (project, option) => {
+    if (option === 'repo' && project.repoUrl) {
+      window.open(project.repoUrl, '_blank');
+    } else if (option === 'live' && project.liveUrl) {
+      window.open(project.liveUrl, '_blank');
+    }
+    setShowProjectOptions(null);
+  };
+
+  // Close project options when clicking outside
+  const handleCloseProjectOptions = () => {
+    setShowProjectOptions(null);
+  };
   
   // Show a temporary command result message
   const showMessage = (message) => {
@@ -640,12 +694,19 @@ const Projects = () => {
   const handleProjectFormSubmit = (e) => {
     e.preventDefault();
     
+    // Validate that at least one URL is provided for new projects
+    if (isAddingProject && !projectFormData.repoUrl && !projectFormData.liveUrl) {
+      showMessage("Please provide at least one URL (Repository or Live Demo)");
+      return;
+    }
+    
     if (isAddingProject) {
       // Adding a new project
       handleAddProject(
         projectFormData.name,
         projectFormData.type,
-        projectFormData.url,
+        projectFormData.repoUrl,
+        projectFormData.liveUrl,
         projectFormData.description
       );
     } else if (editingProject) {
@@ -662,7 +723,8 @@ const Projects = () => {
     setProjectFormData({
       name: '',
       type: '',
-      url: '',
+      repoUrl: '',
+      liveUrl: '',
       description: '',
       dateAdded: new Date().toISOString().split('T')[0]
     });
@@ -675,7 +737,8 @@ const Projects = () => {
     setProjectFormData({
       name: project.name,
       type: project.type,
-      url: project.url,
+      repoUrl: project.repoUrl || '',
+      liveUrl: project.liveUrl || '',
       description: project.description || '',
       dateAdded: project.dateAdded
     });
@@ -687,7 +750,8 @@ const Projects = () => {
     setProjectFormData({
       name: '',
       type: '',
-      url: '',
+      repoUrl: '',
+      liveUrl: '',
       description: '',
       dateAdded: new Date().toISOString().split('T')[0]
     });
@@ -699,7 +763,8 @@ const Projects = () => {
     setProjectFormData({
       name: '',
       type: '',
-      url: '',
+      repoUrl: '',
+      liveUrl: '',
       description: '',
       dateAdded: new Date().toISOString().split('T')[0]
     });
@@ -782,12 +847,30 @@ const Projects = () => {
       try {
         const parsedProjects = JSON.parse(savedProjects);
         
-        // Ensure all projects have description properties
+        // Ensure all projects have description and URL properties
         const updatedProjects = parsedProjects.map(project => {
           const updatedProject = { ...project };
           if (!updatedProject.description) {
             updatedProject.description = '';
           }
+          
+          // Migration: Handle old projects that might have a single 'url' field
+          if (updatedProject.url && !updatedProject.repoUrl && !updatedProject.liveUrl) {
+            // If the URL looks like a GitHub repo, make it repoUrl, otherwise liveUrl
+            if (updatedProject.url.includes('github.com') || updatedProject.url.includes('gitlab.com') || updatedProject.url.includes('bitbucket.org')) {
+              updatedProject.repoUrl = updatedProject.url;
+              updatedProject.liveUrl = '';
+            } else {
+              updatedProject.liveUrl = updatedProject.url;
+              updatedProject.repoUrl = '';
+            }
+            delete updatedProject.url; // Remove the old url field
+          }
+          
+          // Ensure both fields exist
+          if (!updatedProject.repoUrl) updatedProject.repoUrl = '';
+          if (!updatedProject.liveUrl) updatedProject.liveUrl = '';
+          
           return updatedProject;
         });
         
@@ -851,7 +934,7 @@ const Projects = () => {
     switch (type.toLowerCase()) {
       case 'web':
         return (
-          <svg width={90} height={90} viewBox="2 2 16 16" stroke={color.web} fill="none">
+          <svg width={size} height={size} viewBox="2 2 16 16" stroke={color.web} fill="none">
             <g strokeWidth="0.35">
               <path d="M15.69,4.31H4.31A1.61,1.61,0,0,0,2.7,5.92v8a1.61,1.61,0,0,0,1.61,1.61H15.69a1.61,1.61,0,0,0,1.61-1.61v-8A1.61,1.61,0,0,0,15.69,4.31ZM4.31,4.92H15.69a1,1,0,0,1,1,1v.72H3.31V5.92A1,1,0,0,1,4.31,4.92Zm11.38,10H4.31a1,1,0,0,1-1-1V7.25H16.69v6.67A1,1,0,0,1,15.69,14.92Z"/><path d="M4.31,6.18A.34.34,0,1,0,4,5.85.34.34,0,0,0,4.31,6.18Z"/><path d="M5.16,6.18a.34.34,0,1,0-.33-.33A.34.34,0,0,0,5.16,6.18Z"/><path d="M6,6.18a.34.34,0,1,0-.33-.33A.34.34,0,0,0,6,6.18Z"/><path d="M11,10.19l-.39.88-.4-.88s0,0-.07-.07,0-.06-.08-.08h0s-.07,0-.11,0a.17.17,0,0,0-.12,0h0s-.06.06-.08.08-.06,0-.08.07l-.39.88-.39-.88A.32.32,0,0,0,8.45,10a.3.3,0,0,0-.15.4L9,12a.38.38,0,0,0,.14.14h0l.12,0,.12,0h0A.38.38,0,0,0,9.53,12l.39-.89.4.89a.38.38,0,0,0,.14.14h0a.28.28,0,0,0,.13,0l.12,0h0a.38.38,0,0,0,.14-.14l.68-1.51a.31.31,0,0,0-.16-.4A.3.3,0,0,0,11,10.19Z"/><path d="M14.42,10.19l-.39.88-.4-.88s-.05,0-.07-.07,0-.06-.08-.08h0a.17.17,0,0,0-.12,0s-.07,0-.11,0h0s-.05.05-.08.08-.06,0-.07.07l-.4.88-.39-.88a.3.3,0,0,0-.4-.15.3.3,0,0,0-.16.4L12.41,12a.38.38,0,0,0,.14.14h0l.12,0a.28.28,0,0,0,.13,0h0A.38.38,0,0,0,13,12l.4-.89.39.89a.38.38,0,0,0,.14.14h0a.31.31,0,0,0,.13,0l.12,0h0a.41.41,0,0,0,.15-.14L15,10.44a.3.3,0,0,0-.16-.4A.3.3,0,0,0,14.42,10.19Z"/><path d="M7.56,10.19l-.39.88-.39-.88a.24.24,0,0,0-.08-.06A.23.23,0,0,0,6.62,10h0a.17.17,0,0,0-.12,0s-.07,0-.11,0h0l-.08.08s-.06,0-.07.07l-.4.88-.39-.88A.3.3,0,0,0,5,10a.31.31,0,0,0-.16.4L5.55,12a.38.38,0,0,0,.14.14h0l.12,0a.28.28,0,0,0,.13,0H6A.38.38,0,0,0,6.1,12l.4-.89.39.89a.38.38,0,0,0,.14.14h0l.12,0,.12,0h0A.38.38,0,0,0,7.45,12l.67-1.51A.3.3,0,0,0,8,10,.32.32,0,0,0,7.56,10.19Z"/>
             </g>
@@ -861,13 +944,13 @@ const Projects = () => {
       case 'mobile':
         return (
           <svg width={size} height={size} viewBox="0 0 32 32" stroke={color.mobile} fill="none">
-            <path class="st0" d="M19,23v4c0,1.1-0.9,2-2,2H7c-1.1,0-2-0.9-2-2V5c0-1.1,0.9-2,2-2h10c1.1,0,2,0.9,2,2v2"/>
-            <line class="st0" x1="5" y1="7" x2="19" y2="7"/>
-            <line class="st0" x1="5" y1="23" x2="19" y2="23"/>
-            <line class="st0" x1="11" y1="26" x2="13" y2="26"/>
-            <polyline class="st0" points="14,12 11,15 14,18 "/>
-            <polyline class="st0" points="24,12 27,15 24,18 "/>
-            <line class="st0" x1="21" y1="11" x2="17" y2="19"/>
+            <path className="st0" d="M19,23v4c0,1.1-0.9,2-2,2H7c-1.1,0-2-0.9-2-2V5c0-1.1,0.9-2,2-2h10c1.1,0,2,0.9,2,2v2"/>
+            <line className="st0" x1="5" y1="7" x2="19" y2="7"/>
+            <line className="st0" x1="5" y1="23" x2="19" y2="23"/>
+            <line className="st0" x1="11" y1="26" x2="13" y2="26"/>
+            <polyline className="st0" points="14,12 11,15 14,18 "/>
+            <polyline className="st0" points="24,12 27,15 24,18 "/>
+            <line className="st0" x1="21" y1="11" x2="17" y2="19"/>
           </svg>
         );
 
@@ -1064,7 +1147,7 @@ const Projects = () => {
                               key={`project-${project.id}`} 
                               className="explorer-item project-search-result"
                               onClick={() => handleItemClick(project)}
-                              title={`${project.name} - Click to open`}
+                              title={`${project.name} - Click to view options`}
                             >
                               <div className="item-icon">
                                 {project.type === 'web' ? '🌐' : 
@@ -1261,32 +1344,78 @@ const Projects = () => {
                 <div 
                   key={project.id} 
                   className="project-item"
-                  onClick={() => window.open(project.url, '_blank')}
-                  style={{ cursor: 'pointer' }}
-                  title="Click to open project"
+                  style={{ position: 'relative' }}
                 >
                   <div 
-                    className="project-icon"
-                    title="Open project"
+                    className="project-clickable"
+                    onClick={() => handleProjectClick(project)}
+                    style={{ cursor: 'pointer' }}
+                    title="Click to view options"
                   >
-                    {getProjectIcon(project.type)}
-                  </div>
-                  <div className="project-info">
-                    <div className="project-name">
-                      {project.name}
+                    <div 
+                      className="project-icon"
+                      title="View project options"
+                    >
+                      {getProjectIcon(project.type)}
                     </div>
-                    {project.description && (
-                      <div className="project-description">
-                        {project.description}
+                    <div className="project-info">
+                      <div className="project-name">
+                        {project.name}
                       </div>
-                    )}
-                    {viewMode === 'list' && (
-                      <div className="project-meta">
-                        <span className="project-type">{project.type}</span>
-                        {project.dateAdded && <span className="project-date"> • Added {project.dateAdded}</span>}
-                      </div>
-                    )}
+                      {project.description && (
+                        <div className="project-description">
+                          {project.description}
+                        </div>
+                      )}
+                      {viewMode === 'list' && (
+                        <div className="project-meta">
+                          <span className="project-type">{project.type}</span>
+                          {project.dateAdded && <span className="project-date"> • Added {project.dateAdded}</span>}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  
+                  {/* Project Options Popup */}
+                  {showProjectOptions && showProjectOptions.id === project.id && (
+                    <div className="project-options-popup">
+                      <div className="project-options-backdrop" onClick={handleCloseProjectOptions}></div>
+                      <div className="project-options-content">
+                        <h4>{project.name}</h4>
+                        <div className="project-options-buttons">
+                          {project.repoUrl && (
+                            <button 
+                              className="project-option-btn repo-btn"
+                              onClick={() => handleProjectOptionClick(project, 'repo')}
+                            >
+                              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                              </svg>
+                              View Repository
+                            </button>
+                          )}
+                          {project.liveUrl && (
+                            <button 
+                              className="project-option-btn live-btn"
+                              onClick={() => handleProjectOptionClick(project, 'live')}
+                            >
+                              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                              </svg>
+                              View Live Demo
+                            </button>
+                          )}
+                        </div>
+                        <button 
+                          className="project-options-close" 
+                          onClick={handleCloseProjectOptions}
+                        >
+                          <svg viewBox="0 0 384 512"><path fill="#be00ff" d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="project-actions">
                     {editMode ? (
                       <>
@@ -1425,18 +1554,33 @@ const Projects = () => {
                     />
                   </div>
                   {isAddingProject && (
-                    <div className="form-group">
-                      <label htmlFor="url">Project URL:</label>
-                      <input
-                        type="text"
-                        id="url"
-                        name="url"
-                        value={projectFormData.url}
-                        onChange={handleProjectFormChange}
-                        placeholder="https://github.com/... or https://myproject.com/..."
-                        required
-                      />
-                    </div>
+                    <>
+                      <div className="form-group">
+                        <label htmlFor="repoUrl">Repository URL:</label>
+                        <input
+                          type="text"
+                          id="repoUrl"
+                          name="repoUrl"
+                          value={projectFormData.repoUrl}
+                          onChange={handleProjectFormChange}
+                          placeholder="https://github.com/username/repo"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="liveUrl">Live Demo URL:</label>
+                        <input
+                          type="text"
+                          id="liveUrl"
+                          name="liveUrl"
+                          value={projectFormData.liveUrl}
+                          onChange={handleProjectFormChange}
+                          placeholder="https://myproject.com"
+                        />
+                      </div>
+                      <div className="form-note">
+                        <p>Note: At least one URL (Repository or Live Demo) is required.</p>
+                      </div>
+                    </>
                   )}
                   <div className="form-actions">
                     <button type="submit" className="save-btn">

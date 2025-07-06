@@ -142,6 +142,20 @@ const About = () => {
       }
       if (command === 'edit') {
         setShowPasswordModal(true);
+      } else if (command.match(/^edit\s+(.+)\.$/)) {
+        // Handle "edit [password]." format - password must end with a period
+        const matches = command.match(/^edit\s+(.+)\.$/);
+        const password = matches[1];
+        const correctPassword = 'ranbir195'; // Same password as in validatePassword
+        
+        if (password === correctPassword) {
+          setEditMode(true);
+          setCommandInput('');
+          setIsDropdownOpen(true);
+          showMessage("Edit mode activated!");
+        } else {
+          showMessage("Incorrect password. Access denied.");
+        }
       } else if (editMode) {
         // Process commands only available in edit mode
         
