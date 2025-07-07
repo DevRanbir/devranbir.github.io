@@ -9,7 +9,19 @@ import {
   updateAuthorDescription, 
   updateAuthorSkills,
   subscribeToHomepageData,
-  initializeHomepageData
+  initializeHomepageData,
+  // Document management imports
+  getDocumentsData,
+  updateDocuments,
+  subscribeToDocumentsData,
+  // Project management imports
+  getProjectsData,
+  updateProjects,
+  subscribeToProjectsData,
+  // About management imports
+  getAboutData,
+  updateAboutData,
+  subscribeToAboutData
 } from '../firebase/firestoreService';
 
 const Controller = () => {
@@ -34,6 +46,45 @@ const Controller = () => {
   const [editFormData, setEditFormData] = useState({});
   const [newItemData, setNewItemData] = useState({});
   const [isAddingNew, setIsAddingNew] = useState(false);
+  
+  // Documents data states
+  const [documents, setDocuments] = useState([]);
+  const [editingDocument, setEditingDocument] = useState(null);
+  const [documentFormData, setDocumentFormData] = useState({
+    name: '',
+    type: '',
+    url: '',
+    description: '',
+    dateAdded: new Date().toISOString().split('T')[0]
+  });
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [viewMode, setViewMode] = useState('blocks'); // 'blocks' or 'list'
+
+  // Projects data states
+  const [projects, setProjects] = useState([]);
+  const [editingProject, setEditingProject] = useState(null);
+  const [projectFormData, setProjectFormData] = useState({
+    name: '',
+    type: '',
+    repoUrl: '',
+    liveUrl: '',
+    description: '',
+    dateAdded: new Date().toISOString().split('T')[0]
+  });
+  const [selectedProjectFilter, setSelectedProjectFilter] = useState('all');
+  const [projectViewMode, setProjectViewMode] = useState('blocks'); // 'blocks' or 'list'
+
+  // About data states
+  const [aboutData, setAboutData] = useState({
+    githubReadmeUrl: '',
+    githubUsername: '',
+    repositoryName: ''
+  });
+  const [editingAboutData, setEditingAboutData] = useState(null);
+  const [aboutFormData, setAboutFormData] = useState({
+    githubUsername: '',
+    repositoryName: ''
+  });
 
   // Navigation links (reusing social links design)
   const navigationLinks = [
@@ -240,6 +291,211 @@ const Controller = () => {
     }
   };
 
+  // Helper function to ensure URL has proper protocol
+  const ensureValidUrl = (url) => {
+    // If URL doesn't start with http:// or https://, add https://
+    if (url && !url.match(/^https?:\/\//)) {
+      return `https://${url}`;
+    }
+    return url;
+  };
+
+  // Function to convert Google Drive URLs to preview URLs
+  const convertToPreviewUrl = (url) => {
+    // Check if it's a Google Drive sharing URL
+    const gdriveLinkRegex = /https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view/;
+    const match = url.match(gdriveLinkRegex);
+    
+    if (match && match[1]) {
+      // Extract the file ID and convert to preview URL
+      const fileId = match[1];
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+    
+    // Return the original URL if it's not a Google Drive URL
+    return url;
+  };
+
+  // Document management functions
+  const loadDocumentsData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const data = await getDocumentsData();
+      
+      if (data.documents) {
+        setDocuments(data.documents);
+      }
+      
+      showMessage('Documents loaded from Firestore successfully!');
+    } catch (error) {
+      console.error('Error loading documents data:', error);
+      setError('Failed to load documents from Firestore');
+      showMessage('Error loading documents from Firestore');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter documents by type
+  const getDocumentsByFilter = () => {
+    if (selectedFilter === 'all') {
+      return documents;
+    }
+    return documents.filter(doc => doc.type === selectedFilter);
+  };
+  
+  // Handle filter selection
+  const handleFilterClick = (filterType) => {
+    setSelectedFilter(filterType);
+    
+    // Show feedback message
+    const filterLabel = documentFilterLinks.find(f => f.type === filterType)?.label || 'All Documents';
+    const filteredCount = filterType === 'all' ? documents.length : documents.filter(d => d.type === filterType).length;
+    showMessage(`Showing ${filteredCount} ${filterLabel.toLowerCase()}`);
+  };
+
+  // Toggle view mode (blocks or list)
+  const toggleViewMode = () => {
+    const newViewMode = viewMode === 'blocks' ? 'list' : 'blocks';
+    setViewMode(newViewMode);
+    showMessage(`Switched to ${newViewMode} view`);
+  };
+
+  // Get document icon based on type
+  const getDocumentTypeIcon = (type) => {
+    const docType = allowedDocTypes.find(t => t.value === type);
+    return docType ? docType.icon : '📄';
+  };
+
+  // Handle document editing
+  const handleEditDocument = (document) => {
+    setEditingDocument(document);
+    setDocumentFormData({
+      name: document.name,
+      type: document.type,
+      url: document.url,
+      description: document.description || '',
+      dateAdded: document.dateAdded
+    });
+  };
+
+  // Save edited document
+  const handleSaveDocument = async () => {
+    try {
+      setLoading(true);
+      
+      const updatedDocuments = [...documents];
+      const index = updatedDocuments.findIndex(doc => doc.id === editingDocument.id);
+      
+      if (index !== -1) {
+        // Ensure URL has proper protocol
+        const validUrl = ensureValidUrl(documentFormData.url);
+        // Convert Google Drive URLs to preview URLs
+        const previewUrl = convertToPreviewUrl(validUrl);
+        
+        updatedDocuments[index] = {
+          ...updatedDocuments[index],
+          name: documentFormData.name,
+          type: documentFormData.type,
+          url: validUrl,
+          previewUrl: previewUrl,
+          description: documentFormData.description
+        };
+        
+        setDocuments(updatedDocuments);
+        await updateDocuments(updatedDocuments);
+        showMessage(`Document "${documentFormData.name}" updated successfully!`);
+      }
+    } catch (error) {
+      console.error('Error updating document:', error);
+      setError('Failed to update document');
+      showMessage('Error updating document');
+    } finally {
+      setLoading(false);
+      setEditingDocument(null);
+    }
+  };
+
+  // Add new document
+  const handleAddDocument = async () => {
+    try {
+      if (!documentFormData.name || !documentFormData.type || !documentFormData.url) {
+        showMessage('Please fill in all required fields (name, type, URL)');
+        return;
+      }
+      
+      setLoading(true);
+      
+      // Ensure URL has proper protocol
+      const validUrl = ensureValidUrl(documentFormData.url);
+      // Convert Google Drive URLs to preview URLs
+      const previewUrl = convertToPreviewUrl(validUrl);
+      
+      const newId = documents.length > 0 ? Math.max(...documents.map(doc => doc.id)) + 1 : 1;
+      
+      const newDocument = {
+        id: newId,
+        name: documentFormData.name,
+        type: documentFormData.type,
+        url: validUrl,
+        previewUrl: previewUrl,
+        description: documentFormData.description || '',
+        dateAdded: new Date().toISOString().split('T')[0]
+      };
+      
+      const updatedDocuments = [...documents, newDocument];
+      setDocuments(updatedDocuments);
+      await updateDocuments(updatedDocuments);
+      showMessage(`Document "${documentFormData.name}" added successfully!`);
+      
+      // Reset form
+      setDocumentFormData({
+        name: '',
+        type: '',
+        url: '',
+        description: '',
+        dateAdded: new Date().toISOString().split('T')[0]
+      });
+      
+      setIsAddingNew(false);
+    } catch (error) {
+      console.error('Error adding document:', error);
+      setError('Failed to add document');
+      showMessage('Error adding document');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete document
+  const handleDeleteDocument = async (id) => {
+    try {
+      const documentToDelete = documents.find(doc => doc.id === id);
+      
+      if (!documentToDelete) {
+        showMessage('Document not found');
+        return;
+      }
+      
+      if (window.confirm(`Are you sure you want to delete "${documentToDelete.name}"?`)) {
+        setLoading(true);
+        
+        const updatedDocuments = documents.filter(doc => doc.id !== id);
+        setDocuments(updatedDocuments);
+        await updateDocuments(updatedDocuments);
+        showMessage(`Document "${documentToDelete.name}" deleted successfully!`);
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      setError('Failed to delete document');
+      showMessage('Error deleting document');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Default icon function
   const getDefaultIcon = (name) => {
     const iconName = name.toLowerCase();
@@ -256,6 +512,282 @@ const Controller = () => {
     } else {
       return <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
     }
+  };
+
+  // Project management functions
+  const loadProjectsData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const data = await getProjectsData();
+      
+      if (data.projects) {
+        setProjects(data.projects);
+      }
+      
+      showMessage('Projects loaded from Firestore successfully!');
+    } catch (error) {
+      console.error('Error loading projects data:', error);
+      setError('Failed to load projects from Firestore');
+      showMessage('Error loading projects from Firestore');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter projects by type
+  const getProjectsByFilter = () => {
+    if (selectedProjectFilter === 'all') {
+      return projects;
+    }
+    return projects.filter(project => project.type === selectedProjectFilter);
+  };
+  
+  // Handle project filter selection
+  const handleProjectFilterClick = (filterType) => {
+    setSelectedProjectFilter(filterType);
+    
+    // Show feedback message
+    const filterLabel = projectFilterLinks.find(f => f.type === filterType)?.label || 'All Projects';
+    const filteredCount = filterType === 'all' ? projects.length : projects.filter(p => p.type === filterType).length;
+    showMessage(`Showing ${filteredCount} ${filterLabel.toLowerCase()}`);
+  };
+
+  // Toggle project view mode (blocks or list)
+  const toggleProjectViewMode = () => {
+    const newViewMode = projectViewMode === 'blocks' ? 'list' : 'blocks';
+    setProjectViewMode(newViewMode);
+    showMessage(`Switched to ${newViewMode} view for projects`);
+  };
+
+  // Get project icon based on type
+  const getProjectTypeIcon = (type) => {
+    const projectType = allowedProjectTypes.find(t => t.value === type);
+    return projectType ? projectType.icon : '💻';
+  };
+
+  // Handle project editing
+  const handleEditProject = (project) => {
+    setEditingProject(project);
+    setProjectFormData({
+      name: project.name,
+      type: project.type,
+      repoUrl: project.repoUrl || '',
+      liveUrl: project.liveUrl || '',
+      description: project.description || '',
+      dateAdded: project.dateAdded
+    });
+  };
+
+  // Save edited project
+  const handleSaveProject = async () => {
+    try {
+      setLoading(true);
+      
+      const updatedProjects = [...projects];
+      const index = updatedProjects.findIndex(project => project.id === editingProject.id);
+      
+      if (index !== -1) {
+        // Ensure URLs have proper protocol
+        const validRepoUrl = projectFormData.repoUrl ? ensureValidUrl(projectFormData.repoUrl) : '';
+        const validLiveUrl = projectFormData.liveUrl ? ensureValidUrl(projectFormData.liveUrl) : '';
+        
+        updatedProjects[index] = {
+          ...updatedProjects[index],
+          name: projectFormData.name,
+          type: projectFormData.type,
+          repoUrl: validRepoUrl,
+          liveUrl: validLiveUrl,
+          description: projectFormData.description
+        };
+        
+        setProjects(updatedProjects);
+        await updateProjects(updatedProjects);
+        
+        // Dispatch event to notify Projects.js
+        window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+          detail: { projects: updatedProjects, timestamp: new Date().toISOString() } 
+        }));
+        
+        showMessage(`Project "${projectFormData.name}" updated successfully!`);
+      }
+    } catch (error) {
+      console.error('Error updating project:', error);
+      setError('Failed to update project');
+      showMessage('Error updating project');
+    } finally {
+      setLoading(false);
+      setEditingProject(null);
+    }
+  };
+
+  // Add new project
+  const handleAddProject = async () => {
+    try {
+      if (!projectFormData.name || !projectFormData.type) {
+        showMessage('Please fill in all required fields (name and type)');
+        return;
+      }
+      
+      if (!projectFormData.repoUrl && !projectFormData.liveUrl) {
+        showMessage('Please provide at least one URL (Repository or Live Demo)');
+        return;
+      }
+      
+      setLoading(true);
+      
+      // Ensure URLs have proper protocol
+      const validRepoUrl = projectFormData.repoUrl ? ensureValidUrl(projectFormData.repoUrl) : '';
+      const validLiveUrl = projectFormData.liveUrl ? ensureValidUrl(projectFormData.liveUrl) : '';
+      
+      const newId = projects.length > 0 ? Math.max(...projects.map(proj => proj.id)) + 1 : 1;
+      
+      const newProject = {
+        id: newId,
+        name: projectFormData.name,
+        type: projectFormData.type,
+        repoUrl: validRepoUrl,
+        liveUrl: validLiveUrl,
+        description: projectFormData.description || '',
+        dateAdded: new Date().toISOString().split('T')[0]
+      };
+      
+      const updatedProjects = [...projects, newProject];
+      setProjects(updatedProjects);
+      await updateProjects(updatedProjects);
+      
+      // Dispatch event to notify Projects.js
+      window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+        detail: { projects: updatedProjects, timestamp: new Date().toISOString() } 
+      }));
+      
+      showMessage(`Project "${projectFormData.name}" added successfully!`);
+      
+      // Reset form
+      setProjectFormData({
+        name: '',
+        type: '',
+        repoUrl: '',
+        liveUrl: '',
+        description: '',
+        dateAdded: new Date().toISOString().split('T')[0]
+      });
+      
+      setIsAddingNew(false);
+    } catch (error) {
+      console.error('Error adding project:', error);
+      setError('Failed to add project');
+      showMessage('Error adding project');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete project
+  const handleDeleteProject = async (id) => {
+    try {
+      const projectToDelete = projects.find(project => project.id === id);
+      
+      if (!projectToDelete) {
+        showMessage('Project not found');
+        return;
+      }
+      
+      if (window.confirm(`Are you sure you want to delete "${projectToDelete.name}"?`)) {
+        setLoading(true);
+        
+        const updatedProjects = projects.filter(project => project.id !== id);
+        setProjects(updatedProjects);
+        await updateProjects(updatedProjects);
+        
+        // Dispatch event to notify Projects.js
+        window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+          detail: { projects: updatedProjects, timestamp: new Date().toISOString() } 
+        }));
+        
+        showMessage(`Project "${projectToDelete.name}" deleted successfully!`);
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      setError('Failed to delete project');
+      showMessage('Error deleting project');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // === ABOUT DATA MANAGEMENT ===
+  
+  // Load About data from Firestore
+  const loadAboutData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const data = await getAboutData();
+      setAboutData(data);
+      
+      showMessage('About data loaded from Firestore successfully!');
+    } catch (error) {
+      console.error('Error loading about data:', error);
+      setError('Failed to load about data from Firestore');
+      showMessage('Error loading about data from Firestore');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle about data editing
+  const handleEditAboutData = () => {
+    setEditingAboutData(true);
+    setAboutFormData({
+      githubUsername: aboutData.githubUsername || '',
+      repositoryName: aboutData.repositoryName || ''
+    });
+  };
+
+  // Save about data
+  const handleSaveAboutData = async () => {
+    try {
+      if (!aboutFormData.githubUsername || !aboutFormData.repositoryName) {
+        showMessage('Please fill in both GitHub username and repository name');
+        return;
+      }
+      
+      setLoading(true);
+      
+      const updatedAboutData = {
+        githubUsername: aboutFormData.githubUsername.trim(),
+        repositoryName: aboutFormData.repositoryName.trim(),
+        githubReadmeUrl: `https://api.github.com/repos/${aboutFormData.githubUsername.trim()}/${aboutFormData.repositoryName.trim()}/readme`
+      };
+      
+      await updateAboutData(updatedAboutData);
+      setAboutData(updatedAboutData);
+      
+      // Dispatch event to notify About.js component
+      window.dispatchEvent(new CustomEvent('aboutDataUpdated', { 
+        detail: { aboutData: updatedAboutData, timestamp: new Date().toISOString() } 
+      }));
+      
+      showMessage('About data updated successfully!');
+    } catch (error) {
+      console.error('Error updating about data:', error);
+      setError('Failed to update about data');
+      showMessage('Error updating about data');
+    } finally {
+      setLoading(false);
+      setEditingAboutData(null);
+    }
+  };
+
+  // Generate GitHub README URL preview
+  const generateReadmeUrl = () => {
+    if (aboutFormData.githubUsername && aboutFormData.repositoryName) {
+      return `https://api.github.com/repos/${aboutFormData.githubUsername.trim()}/${aboutFormData.repositoryName.trim()}/readme`;
+    }
+    return '';
   };
 
   // Render content based on active section
@@ -442,23 +974,489 @@ const Controller = () => {
         );
       case 'documents':
         return (
-          <div className="section-content">
-            <h2>Documents</h2>
-            <p>Documents section content</p>
+          <div className="section-content doc-management">
+            <div className="doc-header">
+              <h2>Documents Management</h2>
+              <p>Manage all documents from here - add, edit, or remove documents.</p>
+              {loading && <div className="loading-indicator">🔄 Syncing with Firestore...</div>}
+              {error && <div className="error-indicator">❌ {error}</div>}
+            </div>
+            
+            {/* Filter and View Controls */}
+            <div className="doc-controls-section">
+              <div className="doc-filters">
+                <h3>📑 Filter Documents</h3>
+                <div className="doc-filter-buttons">
+                  {documentFilterLinks.map(filter => (
+                    <button 
+                      key={filter.id}
+                      className={`doc-filter-btn ${selectedFilter === filter.type ? 'active' : ''}`}
+                      onClick={() => handleFilterClick(filter.type)}
+                    >
+                      <span className="filter-icon">{filter.icon}</span>
+                      <span className="filter-label">{filter.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="doc-view-toggle">
+                <h3>👁️ View Mode</h3>
+                <div className="view-toggle-buttons">
+                  <button 
+                    className={`view-toggle-btn ${viewMode === 'blocks' ? 'active' : ''}`}
+                    onClick={() => viewMode !== 'blocks' && toggleViewMode()}
+                  >
+                    <span className="toggle-icon">📦</span>
+                    <span className="toggle-label">Blocks</span>
+                  </button>
+                  <button 
+                    className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                    onClick={() => viewMode !== 'list' && toggleViewMode()}
+                  >
+                    <span className="toggle-icon">📋</span>
+                    <span className="toggle-label">List</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Add Document Button */}
+            <div className="doc-add-section">
+              <button 
+                className="doc-add-btn"
+                onClick={() => setIsAddingNew('document')}
+              >
+                + Add New Document
+              </button>
+            </div>
+            
+            {/* Add/Edit Document Form */}
+            {(isAddingNew === 'document' || editingDocument) && (
+              <div className="doc-form-section">
+                <h3>{editingDocument ? 'Edit Document' : 'Add New Document'}</h3>
+                <div className="doc-form">
+                  <div className="form-group">
+                    <label>Document Name:</label>
+                    <input
+                      type="text"
+                      value={documentFormData.name}
+                      onChange={(e) => setDocumentFormData({...documentFormData, name: e.target.value})}
+                      className="edit-input"
+                      placeholder="Enter document name"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Document Type:</label>
+                    <select
+                      value={documentFormData.type}
+                      onChange={(e) => setDocumentFormData({...documentFormData, type: e.target.value})}
+                      className="edit-input doc-select"
+                    >
+                      <option value="">Select document type</option>
+                      {allowedDocTypes.map(type => (
+                        <option key={type.value} value={type.value}>
+                          {type.icon} {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Document URL:</label>
+                    <input
+                      type="url"
+                      value={documentFormData.url}
+                      onChange={(e) => setDocumentFormData({...documentFormData, url: e.target.value})}
+                      className="edit-input"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Description (optional):</label>
+                    <textarea
+                      value={documentFormData.description}
+                      onChange={(e) => setDocumentFormData({...documentFormData, description: e.target.value})}
+                      className="edit-textarea"
+                      placeholder="Enter document description"
+                      rows="3"
+                    />
+                  </div>
+                  
+                  <div className="doc-form-actions">
+                    {editingDocument ? (
+                      <>
+                        <button onClick={handleSaveDocument} className="save-btn">Save Changes</button>
+                        <button onClick={() => setEditingDocument(null)} className="cancel-btn">Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={handleAddDocument} className="save-btn">Add Document</button>
+                        <button onClick={() => setIsAddingNew(false)} className="cancel-btn">Cancel</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Documents Display */}
+            <div className="doc-display-section">
+              <h3>📚 Current Documents</h3>
+              {getDocumentsByFilter().length === 0 ? (
+                <div className="no-docs-message">
+                  {selectedFilter === 'all' 
+                    ? 'No documents found. Add your first document!'
+                    : `No ${selectedFilter} documents found.`}
+                </div>
+              ) : (
+                <div className={`doc-display ${viewMode === 'list' ? 'list-view' : 'block-view'}`}>
+                  {getDocumentsByFilter().map(doc => (
+                    <div key={doc.id} className="doc-item">
+                      <div className="doc-item-content">
+                        <div className="doc-icon">
+                          {getDocumentTypeIcon(doc.type)}
+                        </div>
+                        <div className="doc-details">
+                          <h4 className="doc-name">{doc.name}</h4>
+                          <p className="doc-type">{allowedDocTypes.find(t => t.value === doc.type)?.label}</p>
+                          {doc.description && <p className="doc-description">{doc.description}</p>}
+                          <p className="doc-date">Added: {doc.dateAdded}</p>
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="doc-link">
+                            View Document
+                          </a>
+                        </div>
+                        <div className="doc-actions">
+                          <button onClick={() => handleEditDocument(doc)} className="doc-edit-btn">
+                            ✏️ Edit
+                          </button>
+                          <button onClick={() => handleDeleteDocument(doc.id)} className="doc-delete-btn">
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         );
       case 'projects':
         return (
-          <div className="section-content">
-            <h2>Projects</h2>
-            <p>Projects section content</p>
+          <div className="section-content project-management">
+            <div className="project-header">
+              <h2>Projects Management</h2>
+              <p>Manage all projects from here - add, edit, or remove projects.</p>
+              {loading && <div className="loading-indicator">🔄 Syncing with Firestore...</div>}
+              {error && <div className="error-indicator">❌ {error}</div>}
+            </div>
+            
+            {/* Filter and View Controls */}
+            <div className="project-controls-section">
+              <div className="project-filters">
+                <h3>🎯 Filter Projects</h3>
+                <div className="project-filter-buttons">
+                  {projectFilterLinks.map(filter => (
+                    <button 
+                      key={filter.id}
+                      className={`project-filter-btn ${selectedProjectFilter === filter.type ? 'active' : ''}`}
+                      onClick={() => handleProjectFilterClick(filter.type)}
+                    >
+                      <span className="filter-icon">{filter.icon}</span>
+                      <span className="filter-label">{filter.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="project-view-toggle">
+                <h3>👁️ View Mode</h3>
+                <div className="view-toggle-buttons">
+                  <button 
+                    className={`view-toggle-btn ${projectViewMode === 'blocks' ? 'active' : ''}`}
+                    onClick={() => projectViewMode !== 'blocks' && toggleProjectViewMode()}
+                  >
+                    <span className="toggle-icon">📦</span>
+                    <span className="toggle-label">Blocks</span>
+                  </button>
+                  <button 
+                    className={`view-toggle-btn ${projectViewMode === 'list' ? 'active' : ''}`}
+                    onClick={() => projectViewMode !== 'list' && toggleProjectViewMode()}
+                  >
+                    <span className="toggle-icon">📋</span>
+                    <span className="toggle-label">List</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Add Project Button */}
+            <div className="project-add-section">
+              <button 
+                className="project-add-btn"
+                onClick={() => setIsAddingNew('project')}
+              >
+                + Add New Project
+              </button>
+            </div>
+            
+            {/* Add/Edit Project Form */}
+            {(isAddingNew === 'project' || editingProject) && (
+              <div className="project-form-section">
+                <h3>{editingProject ? 'Edit Project' : 'Add New Project'}</h3>
+                <div className="project-form">
+                  <div className="form-group">
+                    <label>Project Name:</label>
+                    <input
+                      type="text"
+                      value={projectFormData.name}
+                      onChange={(e) => setProjectFormData({...projectFormData, name: e.target.value})}
+                      className="edit-input"
+                      placeholder="Enter project name"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Project Type:</label>
+                    <select
+                      value={projectFormData.type}
+                      onChange={(e) => setProjectFormData({...projectFormData, type: e.target.value})}
+                      className="edit-input project-select"
+                    >
+                      <option value="">Select project type</option>
+                      {allowedProjectTypes.map(type => (
+                        <option key={type.value} value={type.value}>
+                          {type.icon} {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Repository URL:</label>
+                    <input
+                      type="url"
+                      value={projectFormData.repoUrl}
+                      onChange={(e) => setProjectFormData({...projectFormData, repoUrl: e.target.value})}
+                      className="edit-input"
+                      placeholder="https://github.com/username/repo"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Live Demo URL:</label>
+                    <input
+                      type="url"
+                      value={projectFormData.liveUrl}
+                      onChange={(e) => setProjectFormData({...projectFormData, liveUrl: e.target.value})}
+                      className="edit-input"
+                      placeholder="https://yourproject.com"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Description (optional):</label>
+                    <textarea
+                      value={projectFormData.description}
+                      onChange={(e) => setProjectFormData({...projectFormData, description: e.target.value})}
+                      className="edit-textarea"
+                      placeholder="Enter project description"
+                      rows="3"
+                    />
+                  </div>
+                  
+                  <div className="project-form-actions">
+                    {editingProject ? (
+                      <>
+                        <button onClick={handleSaveProject} className="save-btn">Save Changes</button>
+                        <button onClick={() => setEditingProject(null)} className="cancel-btn">Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={handleAddProject} className="save-btn">Add Project</button>
+                        <button onClick={() => setIsAddingNew(false)} className="cancel-btn">Cancel</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Projects Display */}
+            <div className="project-display-section">
+              <h3>💼 Current Projects</h3>
+              {getProjectsByFilter().length === 0 ? (
+                <div className="no-projects-message">
+                  {selectedProjectFilter === 'all' 
+                    ? 'No projects found. Add your first project!'
+                    : `No ${selectedProjectFilter} projects found.`}
+                </div>
+              ) : (
+                <div className={`project-display ${projectViewMode === 'list' ? 'list-view' : 'block-view'}`}>
+                  {getProjectsByFilter().map(project => (
+                    <div key={project.id} className="project-item">
+                      <div className="project-item-content">
+                        <div className="project-icon">
+                          {getProjectTypeIcon(project.type)}
+                        </div>
+                        <div className="project-details">
+                          <h4 className="project-name">{project.name}</h4>
+                          <p className="project-type">{allowedProjectTypes.find(t => t.value === project.type)?.label}</p>
+                          {project.description && <p className="project-description">{project.description}</p>}
+                          <p className="project-date">Added: {project.dateAdded}</p>
+                          <div className="project-links">
+                            {project.repoUrl && (
+                              <a href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="project-link repo-link">
+                                📁 Repository
+                              </a>
+                            )}
+                            {project.liveUrl && (
+                              <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="project-link live-link">
+                                🌐 Live Demo
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        <div className="project-actions">
+                          <button onClick={() => handleEditProject(project)} className="project-edit-btn">
+                            ✏️ Edit
+                          </button>
+                          <button onClick={() => handleDeleteProject(project.id)} className="project-delete-btn">
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         );
       case 'about':
         return (
-          <div className="section-content">
-            <h2>About</h2>
-            <p>About section content</p>
+          <div className="about-section-content">
+            <div className="about-mgmt-header">
+              <h2>About Page Management</h2>
+              <p>Manage the GitHub repository settings for the About page README display.</p>
+              {loading && <div className="loading-indicator">🔄 Syncing with Firestore...</div>}
+              {error && <div className="error-indicator">❌ {error}</div>}
+            </div>
+            
+            {/* GitHub Repository Settings */}
+            <div className="about-mgmt-section">
+              <h3>📖 GitHub Repository Settings</h3>
+              <div className="github-repo-manager">
+                {editingAboutData ? (
+                  <div className="about-edit-form">
+                    <div className="about-form-group">
+                      <label>GitHub Username:</label>
+                      <input
+                        type="text"
+                        value={aboutFormData.githubUsername}
+                        onChange={(e) => setAboutFormData({...aboutFormData, githubUsername: e.target.value})}
+                        className="about-edit-input"
+                        placeholder="Enter GitHub username"
+                      />
+                    </div>
+                    
+                    <div className="about-form-group">
+                      <label>Repository Name:</label>
+                      <input
+                        type="text"
+                        value={aboutFormData.repositoryName}
+                        onChange={(e) => setAboutFormData({...aboutFormData, repositoryName: e.target.value})}
+                        className="about-edit-input"
+                        placeholder="Enter repository name"
+                      />
+                    </div>
+                    
+                    {generateReadmeUrl() && (
+                      <div className="about-form-group">
+                        <label>Generated README URL:</label>
+                        <div className="about-url-preview">
+                          <code>{generateReadmeUrl()}</code>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="about-edit-actions">
+                      <button onClick={handleSaveAboutData} className="about-save-btn">Save Changes</button>
+                      <button onClick={() => setEditingAboutData(null)} className="about-cancel-btn">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="about-display-content">
+                    <div className="about-current-settings">
+                      <h4>Current Settings:</h4>
+                      <div className="about-setting-item">
+                        <strong>GitHub Username:</strong> 
+                        <span className="about-setting-value">{aboutData.githubUsername || 'Not set'}</span>
+                      </div>
+                      <div className="about-setting-item">
+                        <strong>Repository Name:</strong> 
+                        <span className="about-setting-value">{aboutData.repositoryName || 'Not set'}</span>
+                      </div>
+                      <div className="about-setting-item">
+                        <strong>README URL:</strong> 
+                        <span className="about-setting-value about-url-text">
+                          {aboutData.githubReadmeUrl || 'Not configured'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="about-actions">
+                      <button onClick={handleEditAboutData} className="about-edit-btn">
+                        ✏️ Edit Repository Settings
+                      </button>
+                      {aboutData.githubReadmeUrl && (
+                        <a 
+                          href={`https://github.com/${aboutData.githubUsername}/${aboutData.repositoryName}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="about-view-repo-btn"
+                        >
+                          🔗 View Repository
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* README Preview Information */}
+            <div className="about-mgmt-section">
+              <h3>📄 README Information</h3>
+              <div className="about-readme-info">
+                <p>The About page displays the README content from the specified GitHub repository.</p>
+                <ul className="about-readme-features">
+                  <li>✅ Automatically fetches README from GitHub API</li>
+                  <li>✅ Displays HTML-formatted content</li>
+                  <li>✅ Supports images, code blocks, and links</li>
+                  <li>✅ Auto-refreshes when repository settings change</li>
+                </ul>
+                
+                {aboutData.githubReadmeUrl ? (
+                  <div className="about-readme-status">
+                    <span className="about-status-indicator about-status-active">✅ Active</span>
+                    <span className="about-status-text">
+                      README will be loaded from: {aboutData.githubUsername}/{aboutData.repositoryName}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="about-readme-status">
+                    <span className="about-status-indicator about-status-inactive">❌ Inactive</span>
+                    <span className="about-status-text">
+                      Configure GitHub repository settings to display README
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         );
       case 'contacts':
@@ -502,9 +1500,12 @@ const Controller = () => {
   useEffect(() => {
     if (isAuthenticated) {
       loadHomepageData();
+      loadDocumentsData();
+      loadProjectsData();
+      loadAboutData();
       
       // Set up real-time listener for Firestore updates
-      const unsubscribe = subscribeToHomepageData((data) => {
+      const unsubscribeHomepage = subscribeToHomepageData((data) => {
         // Update local state when Firestore data changes
         if (data.socialLinks) {
           const reconstructedLinks = data.socialLinks.map(link => ({
@@ -522,11 +1523,75 @@ const Controller = () => {
           setAuthorSkills(data.authorSkills);
         }
       });
+      
+      // Set up real-time listener for documents updates
+      const unsubscribeDocuments = subscribeToDocumentsData((data) => {
+        if (data.documents) {
+          setDocuments(data.documents);
+        }
+      });
 
-      // Cleanup subscription on unmount
-      return () => unsubscribe();
+      // Set up real-time listener for projects updates
+      const unsubscribeProjects = subscribeToProjectsData((data) => {
+        if (data.projects) {
+          setProjects(data.projects);
+        }
+      });
+
+      // Set up real-time listener for about data updates
+      const unsubscribeAbout = subscribeToAboutData((data) => {
+        if (data) {
+          setAboutData(data);
+        }
+      });
+
+      // Cleanup subscriptions on unmount
+      return () => {
+        unsubscribeHomepage();
+        unsubscribeDocuments();
+        unsubscribeProjects();
+        unsubscribeAbout();
+      };
     }
   }, [isAuthenticated]);
+
+  // Allowed document types
+  const allowedDocTypes = [
+    { value: 'video', label: 'Video', icon: '🎬' },
+    { value: 'image', label: 'Image', icon: '🖼️' },
+    { value: 'pdf', label: 'PDF', icon: '📄' },
+    { value: 'text', label: 'Text', icon: '📝' },
+    { value: 'ppt', label: 'PowerPoint', icon: '📊' }
+  ];
+  
+  // Filter links for document types
+  const documentFilterLinks = [
+    { id: 'all', label: 'All Documents', type: 'all', icon: '📚' },
+    { id: 'video', label: 'Videos', type: 'video', icon: '🎬' },
+    { id: 'image', label: 'Images', type: 'image', icon: '🖼️' },
+    { id: 'pdf', label: 'PDFs', type: 'pdf', icon: '📄' },
+    { id: 'text', label: 'Text Files', type: 'text', icon: '📝' },
+    { id: 'ppt', label: 'PowerPoints', type: 'ppt', icon: '📊' }
+  ];
+
+  // Allowed project types
+  const allowedProjectTypes = [
+    { value: 'web', label: 'Web Development', icon: '🌐' },
+    { value: 'mobile', label: 'Mobile Apps', icon: '📱' },
+    { value: 'desktop', label: 'Desktop Software', icon: '💻' },
+    { value: 'game', label: 'Games', icon: '🎮' },
+    { value: 'other', label: 'Other', icon: '📂' }
+  ];
+  
+  // Filter links for project types
+  const projectFilterLinks = [
+    { id: 'all', label: 'All Projects', type: 'all', icon: '📚' },
+    { id: 'web', label: 'Web Development', type: 'web', icon: '🌐' },
+    { id: 'mobile', label: 'Mobile Apps', type: 'mobile', icon: '📱' },
+    { id: 'desktop', label: 'Desktop Software', type: 'desktop', icon: '💻' },
+    { id: 'game', label: 'Games', type: 'game', icon: '🎮' },
+    { id: 'other', label: 'Other', type: 'other', icon: '📂' }
+  ];
 
   if (!isAuthenticated) {
     return (

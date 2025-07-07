@@ -2,6 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css'; // Reusing Homepage styles
 import './About.css'; // New styles for About-specific content
+import { 
+  getAboutData, 
+  subscribeToAboutData,
+  getHomepageData,
+  subscribeToHomepageData,
+  updateSocialLinks 
+} from '../firebase/firestoreService';
 
 const About = () => {
   const navigate = useNavigate();
@@ -17,13 +24,14 @@ const About = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [editingSocial, setEditingSocial] = useState(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [socialLinks, setSocialLinks] = useState([
-    { id: 'github', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>, url: 'https://github.com/yourname' },
-    { id: 'linkedin', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>, url: 'https://linkedin.com/in/yourname' },
-    { id: 'twitter', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>, url: 'https://twitter.com/yourname' },
-    { id: 'instagram', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>, url: 'https://instagram.com/yourname' },
-    { id: 'mail', icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>, url: 'mailto:your.email@example.com' },
-  ]);
+  // About data state
+  const [aboutData, setAboutData] = useState({
+    githubReadmeUrl: 'https://api.github.com/repos/DevRanbir/DevRanbir/readme',
+    githubUsername: 'DevRanbir',
+    repositoryName: 'DevRanbir'
+  });
+  // Social links from homepage data (synced with homepage)
+  const [socialLinks, setSocialLinks] = useState([]);
   const [editFormData, setEditFormData] = useState({
     name: '',
     iconType: '',
@@ -294,11 +302,8 @@ const About = () => {
       actionMessage = `"${oldName}" link has been updated to "${editFormData.name}".`;
     }
     
-    // Update the links
-    setSocialLinks(updatedLinks);
-    
-    // Show success message
-    showMessage(actionMessage);
+    // Update the links in Firestore
+    updateSocialLinksToFirestore(updatedLinks, actionMessage);
     
     // Reset the editing state
     setEditingSocial(null);
@@ -308,9 +313,25 @@ const About = () => {
   const handleRemoveSocial = (socialId) => {
     const link = socialLinks.find(link => link.id === socialId);
     const updatedLinks = socialLinks.filter(link => link.id !== socialId);
-    setSocialLinks(updatedLinks);
+    
     if (link) {
-      showMessage(`The "${link.id}" link has been removed.`);
+      const actionMessage = `The "${link.id}" link has been removed.`;
+      updateSocialLinksToFirestore(updatedLinks, actionMessage);
+    }
+  };
+
+  // Helper function to update social links to Firestore
+  const updateSocialLinksToFirestore = async (updatedLinks, successMessage) => {
+    try {
+      // Update local state immediately for better UX
+      setSocialLinks(updatedLinks);
+      
+      // Save to Firestore
+      await updateSocialLinks(updatedLinks);
+      showMessage(successMessage);
+    } catch (error) {
+      console.error('Error updating social links:', error);
+      showMessage('Error updating social links. Please try again.');
     }
   };
 
@@ -332,8 +353,8 @@ const About = () => {
     };
     
     const updatedLinks = [...socialLinks, newSocial];
-    setSocialLinks(updatedLinks);
-    showMessage(`New "${name}" link has been added.`);
+    const actionMessage = `New "${name}" link has been added.`;
+    updateSocialLinksToFirestore(updatedLinks, actionMessage);
   };
   
   const handleCommandRemoveLink = (name) => {
@@ -345,8 +366,9 @@ const About = () => {
     }
     
     if (window.confirm(`Are you sure you want to remove the "${name}" link?`)) {
-      handleRemoveSocial(link.id);
-      showMessage(`The "${name}" link has been removed.`);
+      const updatedLinks = socialLinks.filter(link => link.id.toLowerCase() !== name.toLowerCase());
+      const actionMessage = `The "${name}" link has been removed.`;
+      updateSocialLinksToFirestore(updatedLinks, actionMessage);
     }
   };
   
@@ -376,8 +398,8 @@ const About = () => {
         : l
     );
     
-    setSocialLinks(updatedLinks);
-    showMessage(`"${oldName}" link has been updated to "${newName}".`);
+    const actionMessage = `"${oldName}" link has been updated to "${newName}".`;
+    updateSocialLinksToFirestore(updatedLinks, actionMessage);
   };
 
   // Show a temporary command result message
@@ -397,9 +419,12 @@ const About = () => {
       setReadmeLoading(true);
       setReadmeError(null);
       
+      // Use the dynamic GitHub README URL from aboutData
+      const readmeUrl = aboutData.githubReadmeUrl || 'https://api.github.com/repos/DevRanbir/DevRanbir/readme';
+      
       // Fetch HTML version of README from GitHub API
       const response = await fetch(
-        `https://api.github.com/repos/DevRanbir/DevRanbir/readme`,
+        readmeUrl,
         {
           headers: {
             Accept: 'application/vnd.github.v3.html'
@@ -486,40 +511,114 @@ const About = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Load social links from localStorage on initial render
+  // Load social links from Firestore (synced with homepage)
   useEffect(() => {
-    const savedLinks = localStorage.getItem('socialLinks');
-    
-    if (savedLinks) {
+    const loadHomepageData = async () => {
       try {
-        // Need to parse the JSON and reconstruct the JSX for icons
-        const parsedLinks = JSON.parse(savedLinks);
-        const reconstructedLinks = parsedLinks.map(link => {
-          return {
+        const data = await getHomepageData();
+        if (data.socialLinks) {
+          // Reconstruct social links with icons
+          const reconstructedLinks = data.socialLinks.map(link => ({
             ...link,
-            icon: getDefaultIcon(link.id) // Re-create the icon JSX
-          };
-        });
-        setSocialLinks(reconstructedLinks);
+            icon: getDefaultIcon(link.id)
+          }));
+          setSocialLinks(reconstructedLinks);
+        }
       } catch (error) {
-        console.error('Error loading social links from localStorage:', error);
+        console.error('Error loading homepage data:', error);
       }
-    }
+    };
+
+    loadHomepageData();
+
+    // Set up real-time listener for homepage data updates
+    const unsubscribe = subscribeToHomepageData((data) => {
+      if (data.socialLinks) {
+        const reconstructedLinks = data.socialLinks.map(link => ({
+          ...link,
+          icon: getDefaultIcon(link.id)
+        }));
+        setSocialLinks(reconstructedLinks);
+        console.log('Social links updated from homepage data:', reconstructedLinks);
+      }
+    });
+
+    // Listen for homepageDataUpdated events from Controller
+    const handleHomepageDataUpdate = (event) => {
+      if (event.detail && event.detail.data && event.detail.data.socialLinks) {
+        const reconstructedLinks = event.detail.data.socialLinks.map(link => ({
+          ...link,
+          icon: getDefaultIcon(link.id)
+        }));
+        setSocialLinks(reconstructedLinks);
+        console.log('Social links updated from Controller:', reconstructedLinks);
+      }
+    };
+
+    window.addEventListener('homepageDataUpdated', handleHomepageDataUpdate);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('homepageDataUpdated', handleHomepageDataUpdate);
+    };
+  }, []);
+
+  // Load About data from Firestore on component mount
+  useEffect(() => {
+    const loadAboutData = async () => {
+      try {
+        const data = await getAboutData();
+        setAboutData(data);
+        console.log('About data loaded:', data);
+      } catch (error) {
+        console.error('Error loading about data:', error);
+        // Use default values if loading fails
+        setAboutData({
+          githubReadmeUrl: 'https://api.github.com/repos/DevRanbir/DevRanbir/readme',
+          githubUsername: 'DevRanbir',
+          repositoryName: 'DevRanbir'
+        });
+      }
+    };
+
+    loadAboutData();
+
+    // Set up real-time listener for About data updates
+    const unsubscribe = subscribeToAboutData((data) => {
+      if (data) {
+        setAboutData(data);
+        console.log('About data updated from Firestore:', data);
+        // Re-fetch README when data changes
+        fetchReadme();
+      }
+    });
+
+    // Listen for aboutDataUpdated events from Controller
+    const handleAboutDataUpdate = (event) => {
+      if (event.detail && event.detail.aboutData) {
+        setAboutData(event.detail.aboutData);
+        console.log('About data updated from Controller:', event.detail.aboutData);
+        // Re-fetch README when data changes
+        fetchReadme();
+      }
+    };
+
+    window.addEventListener('aboutDataUpdated', handleAboutDataUpdate);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('aboutDataUpdated', handleAboutDataUpdate);
+    };
   }, []);
   
   // Save social links to localStorage whenever they change
-  useEffect(() => {
-    if (socialLinks.length > 0) {
-      // We need to serialize the links without the JSX icons
-      const serializableLinks = socialLinks.map(({ id, url }) => ({ id, url }));
-      localStorage.setItem('socialLinks', JSON.stringify(serializableLinks));
-    }
-  }, [socialLinks]);
+  // Note: Now using Firestore instead of localStorage for persistence
+  // Social links are saved via updateSocialLinksToFirestore function
 
-  // Fetch README content when component mounts
+  // Fetch README content when component mounts or aboutData changes
   useEffect(() => {
     fetchReadme();
-  }, []);
+  }, [aboutData.githubReadmeUrl]);
   
   // Function to get default icon based on social media name
   const getDefaultIcon = (name) => {
@@ -584,11 +683,6 @@ const About = () => {
       }
     };
   }, [scrollInterval]);
-
-  // Fetch README content when component mounts
-  useEffect(() => {
-    fetchReadme();
-  }, []);
   
   return (
     <div className="homepage">

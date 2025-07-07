@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import './ProjectsStyles.css';
+import { 
+  getProjectsData, 
+  updateProjects, 
+  subscribeToProjectsData 
+} from '../firebase/firestoreService';
 
 const Projects = () => {
   const navigate = useNavigate();
@@ -274,7 +279,7 @@ const Projects = () => {
   };
   
   // Password handling and edit mode functionality
-  const handleCommandSubmit = (e) => {
+  const handleCommandSubmit = async (e) => {
     if (e.key === 'Enter') {
       const command = commandInput.toLowerCase().trim();
       
@@ -363,7 +368,7 @@ const Projects = () => {
           const liveUrl = matches[4];
           const description = matches[5] || '';
           
-          handleAddProject(name, type, repoUrl, liveUrl, description);
+          await handleAddProject(name, type, repoUrl, liveUrl, description);
         }
         // Command pattern: "batch-add [type1] [name1] [repo1] [live1] [desc1] | [type2] [name2] [repo2] [live2] [desc2] | ..." - To add multiple projects
         else if (command.match(/^batch-add\s+(.+)$/)) {
@@ -388,7 +393,7 @@ const Projects = () => {
           });
           
           if (projectsData.length > 0) {
-            handleBatchAddProjects(projectsData);
+            await handleBatchAddProjects(projectsData);
           } else {
             showMessage("Invalid batch-add format. Use: batch-add type1 name1 repo1 live1 desc1 | type2 name2 repo2 live2 desc2");
           }
@@ -405,7 +410,7 @@ const Projects = () => {
           // Find project by type and name
           const project = projects.find(p => p.type === oldType && p.name === oldName);
           if (project) {
-            handleEditProject(project.id, newName, newType, newDescription);
+            await handleEditProject(project.id, newName, newType, newDescription);
           } else {
             showMessage(`Project "${oldName}" of type "${oldType}" not found.`);
           }
@@ -418,7 +423,7 @@ const Projects = () => {
           // Find project by name
           const project = projects.find(p => p.name === name);
           if (project) {
-            handleRemoveProject(project.id);
+            await handleRemoveProject(project.id);
           } else {
             showMessage(`Project "${name}" not found.`);
           }
@@ -430,13 +435,13 @@ const Projects = () => {
           
           // Check if it's "batch-remove all"
           if (namesString.toLowerCase().trim() === 'all') {
-            handleBatchRemoveAllProjects();
+            await handleBatchRemoveAllProjects();
           } else {
             // Split by spaces to get individual names (assuming names don't contain spaces)
             const names = namesString.split(/\s+/).filter(name => name.trim());
             
             if (names.length > 0) {
-              handleBatchRemoveProjects(names);
+              await handleBatchRemoveProjects(names);
             } else {
               showMessage("Invalid batch-remove format. Use: batch-remove name1 name2 name3 or batch-remove all");
             }
@@ -501,7 +506,7 @@ const Projects = () => {
   };
   
   // Project management functions
-  const handleAddProject = (name, type, repoUrl, liveUrl, description = '') => {
+  const handleAddProject = async (name, type, repoUrl, liveUrl, description = '') => {
     // Validate that at least one URL is provided
     if (!repoUrl && !liveUrl) {
       showMessage("At least one URL (Repository or Live Demo) is required.");
@@ -527,11 +532,16 @@ const Projects = () => {
     setProjects(updatedProjects);
     showMessage(`Project "${name}" added successfully!`);
     
-    // Save to localStorage
-    localStorage.setItem('projects', JSON.stringify(updatedProjects));
+    // Save to Firestore
+    await updateProjects(updatedProjects);
+    
+    // Dispatch event to notify Controller
+    window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+      detail: { projects: updatedProjects, timestamp: new Date().toISOString() } 
+    }));
   };
   
-  const handleEditProject = (id, name, type, description) => {
+  const handleEditProject = async (id, name, type, description) => {
     const projectIndex = projects.findIndex(project => project.id === id);
     if (projectIndex === -1) {
       showMessage(`Project with ID ${id} not found.`);
@@ -549,11 +559,16 @@ const Projects = () => {
     setProjects(updatedProjects);
     showMessage(`Project with ID ${id} updated successfully!`);
     
-    // Save to localStorage
-    localStorage.setItem('projects', JSON.stringify(updatedProjects));
+    // Save to Firestore
+    await updateProjects(updatedProjects);
+    
+    // Dispatch event to notify Controller
+    window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+      detail: { projects: updatedProjects, timestamp: new Date().toISOString() } 
+    }));
   };
   
-  const handleRemoveProject = (id) => {
+  const handleRemoveProject = async (id) => {
     const projectIndex = projects.findIndex(project => project.id === id);
     if (projectIndex === -1) {
       showMessage(`Project with ID ${id} not found.`);
@@ -566,13 +581,18 @@ const Projects = () => {
       setProjects(updatedProjects);
       showMessage(`Project "${projectName}" removed successfully!`);
       
-      // Save to localStorage
-      localStorage.setItem('projects', JSON.stringify(updatedProjects));
+      // Save to Firestore
+      await updateProjects(updatedProjects);
+      
+      // Dispatch event to notify Controller
+      window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+        detail: { projects: updatedProjects, timestamp: new Date().toISOString() } 
+      }));
     }
   };
 
   // Batch operations
-  const handleBatchAddProjects = (projectsData) => {
+  const handleBatchAddProjects = async (projectsData) => {
     let addedCount = 0;
     const updatedProjects = [...projects];
     
@@ -599,14 +619,22 @@ const Projects = () => {
     
     if (addedCount > 0) {
       setProjects(updatedProjects);
-      localStorage.setItem('projects', JSON.stringify(updatedProjects));
+      
+      // Save to Firestore
+      await updateProjects(updatedProjects);
+      
+      // Dispatch event to notify Controller
+      window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+        detail: { projects: updatedProjects, timestamp: new Date().toISOString() } 
+      }));
+      
       showMessage(`Successfully added ${addedCount} project(s)!`);
     } else {
       showMessage("No valid projects to add. At least one URL (repo or live) is required for each project.");
     }
   };
 
-  const handleBatchRemoveProjects = (names) => {
+  const handleBatchRemoveProjects = async (names) => {
     let removedCount = 0;
     let updatedProjects = [...projects];
     
@@ -620,14 +648,22 @@ const Projects = () => {
     
     if (removedCount > 0) {
       setProjects(updatedProjects);
-      localStorage.setItem('projects', JSON.stringify(updatedProjects));
+      
+      // Save to Firestore
+      await updateProjects(updatedProjects);
+      
+      // Dispatch event to notify Controller
+      window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+        detail: { projects: updatedProjects, timestamp: new Date().toISOString() } 
+      }));
+      
       showMessage(`Successfully removed ${removedCount} project(s)!`);
     } else {
       showMessage("No matching projects found to remove.");
     }
   };
 
-  const handleBatchRemoveAllProjects = () => {
+  const handleBatchRemoveAllProjects = async () => {
     if (projects.length === 0) {
       showMessage("No projects to remove.");
       return;
@@ -636,7 +672,15 @@ const Projects = () => {
     const projectCount = projects.length;
     if (window.confirm(`Are you sure you want to remove all ${projectCount} project(s)? This action cannot be undone.`)) {
       setProjects([]);
-      localStorage.setItem('projects', JSON.stringify([]));
+      
+      // Save to Firestore
+      await updateProjects([]);
+      
+      // Dispatch event to notify Controller
+      window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+        detail: { projects: [], timestamp: new Date().toISOString() } 
+      }));
+      
       showMessage(`Successfully removed all ${projectCount} project(s)!`);
       
       // Reset pagination to first page
@@ -691,7 +735,7 @@ const Projects = () => {
     });
   };
   
-  const handleProjectFormSubmit = (e) => {
+  const handleProjectFormSubmit = async (e) => {
     e.preventDefault();
     
     // Validate that at least one URL is provided for new projects
@@ -702,7 +746,7 @@ const Projects = () => {
     
     if (isAddingProject) {
       // Adding a new project
-      handleAddProject(
+      await handleAddProject(
         projectFormData.name,
         projectFormData.type,
         projectFormData.repoUrl,
@@ -711,7 +755,7 @@ const Projects = () => {
       );
     } else if (editingProject) {
       // Editing an existing project
-      handleEditProject(
+      await handleEditProject(
         editingProject.id,
         projectFormData.name,
         projectFormData.type,
@@ -840,50 +884,41 @@ const Projects = () => {
     };
   }, []);
 
-  // Load projects from localStorage on initial render
+  // Load projects from Firestore and set up real-time sync
   useEffect(() => {
-    const savedProjects = localStorage.getItem('projects');
-    if (savedProjects) {
+    const loadProjectsFromFirestore = async () => {
       try {
-        const parsedProjects = JSON.parse(savedProjects);
-        
-        // Ensure all projects have description and URL properties
-        const updatedProjects = parsedProjects.map(project => {
-          const updatedProject = { ...project };
-          if (!updatedProject.description) {
-            updatedProject.description = '';
-          }
-          
-          // Migration: Handle old projects that might have a single 'url' field
-          if (updatedProject.url && !updatedProject.repoUrl && !updatedProject.liveUrl) {
-            // If the URL looks like a GitHub repo, make it repoUrl, otherwise liveUrl
-            if (updatedProject.url.includes('github.com') || updatedProject.url.includes('gitlab.com') || updatedProject.url.includes('bitbucket.org')) {
-              updatedProject.repoUrl = updatedProject.url;
-              updatedProject.liveUrl = '';
-            } else {
-              updatedProject.liveUrl = updatedProject.url;
-              updatedProject.repoUrl = '';
-            }
-            delete updatedProject.url; // Remove the old url field
-          }
-          
-          // Ensure both fields exist
-          if (!updatedProject.repoUrl) updatedProject.repoUrl = '';
-          if (!updatedProject.liveUrl) updatedProject.liveUrl = '';
-          
-          return updatedProject;
-        });
-        
-        setProjects(updatedProjects);
-        
-        // Save the updated projects back to localStorage
-        if (JSON.stringify(parsedProjects) !== JSON.stringify(updatedProjects)) {
-          localStorage.setItem('projects', JSON.stringify(updatedProjects));
+        const data = await getProjectsData();
+        if (data.projects) {
+          setProjects(data.projects);
         }
       } catch (error) {
-        console.error('Error loading projects from localStorage:', error);
+        console.error('Error loading projects from Firestore:', error);
       }
-    }
+    };
+
+    loadProjectsFromFirestore();
+
+    // Set up real-time listener for Firestore updates
+    const unsubscribeProjects = subscribeToProjectsData((data) => {
+      if (data.projects) {
+        setProjects(data.projects);
+      }
+    });
+
+    // Listen for updates from Controller
+    const handleProjectsUpdate = (event) => {
+      const { projects: updatedProjects } = event.detail;
+      setProjects(updatedProjects);
+    };
+
+    window.addEventListener('projectsDataUpdated', handleProjectsUpdate);
+
+    // Cleanup listeners on unmount
+    return () => {
+      unsubscribeProjects();
+      window.removeEventListener('projectsDataUpdated', handleProjectsUpdate);
+    };
     
     // Load the latest Spline viewer script with enhanced error handling
     const script = document.createElement('script');
