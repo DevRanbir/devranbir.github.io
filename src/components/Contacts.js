@@ -1,7 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import './Contacts.css';
+import { 
+  getContactsData, 
+  updateSocialBubbles, 
+  subscribeToContactsData 
+} from '../firebase/firestoreService';
 
 const Contacts = () => {
   const navigate = useNavigate();
@@ -82,78 +87,19 @@ const Contacts = () => {
     }
   ]);
 
-  // Social links specifically for contact page with bubble properties
-  const [socialLinks, setSocialLinks] = useState([
-    { 
-      id: 'email', 
-      icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-        <polyline points="22,6 12,13 2,6"></polyline>
-      </svg>, 
-      url: 'mailto:your.email@example.com',
-      size: 80,
-      color: '#be00ff',
-      x: 15,
-      y: 20
-    },
-    { 
-      id: 'phone', 
-      icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-      </svg>, 
-      url: 'tel:+1234567890',
-      size: 65,
-      color: '#8b00cc',
-      x: 70,
-      y: 15
-    },
-    { 
-      id: 'linkedin', 
-      icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
-        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-        <rect x="2" y="9" width="4" height="12"></rect>
-        <circle cx="4" cy="4" r="2"></circle>
-      </svg>, 
-      url: 'https://linkedin.com/in/yourname',
-      size: 90,
-      color: '#e600ff',
-      x: 25,
-      y: 55
-    },
-    { 
-      id: 'twitter', 
-      icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
-        <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
-      </svg>, 
-      url: 'https://twitter.com/yourname',
-      size: 70,
-      color: '#d400e6',
-      x: 75,
-      y: 60
-    },
-    { 
-      id: 'github', 
-      icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none">
-        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-      </svg>, 
-      url: 'https://github.com/yourname',
-      size: 85,
-      color: '#be00ff',
-      x: 50,
-      y: 85
-    },
-    { 
-      id: 'discord', 
-      icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="currentColor">
-        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-      </svg>, 
-      url: 'https://discord.gg/yourserver',
-      size: 75,
-      color: '#cc00e6',
-      x: 10,
-      y: 80
+  // Firestore contacts data states
+  const [contactsData, setContactsData] = useState({
+    description: '',
+    socialBubbles: [],
+    locationDetails: {
+      location: '',
+      responseTime: '',
+      status: ''
     }
-  ]);
+  });
+
+  // Social links from Firestore (with icons added for display)
+  const [socialLinks, setSocialLinks] = useState([]);
 
   // Dropdown items for Windows Explorer style interface
   const dropdownItems = [
@@ -409,7 +355,7 @@ const Contacts = () => {
   };
   
   // Social link management functions
-  const handleAddSocial = (name, url, size = 75, color = '#be00ff') => {
+  const handleAddSocial = async (name, url, size = 75, color = '#be00ff') => {
     // Ensure URL has proper protocol
     const validUrl = url.startsWith('http') ? url : `https://${url}`;
     
@@ -450,7 +396,6 @@ const Contacts = () => {
     
     const newSocial = {
       id: name.toLowerCase(),
-      icon: getDefaultIcon(name),
       url: validUrl,
       size: Math.min(Math.max(size, 40), 120), // Ensure size is between 40-120
       color: color,
@@ -458,14 +403,15 @@ const Contacts = () => {
       y: position.y
     };
     
-    setSocialLinks([...socialLinks, newSocial]);
-    showMessage(`Contact "${name}" added successfully!`);
+    const updatedSocialLinks = [...socialLinks, { ...newSocial, icon: getDefaultIcon(name) }];
+    setSocialLinks(updatedSocialLinks);
     
-    // Save to localStorage
-    localStorage.setItem('contactLinks', JSON.stringify([...socialLinks, newSocial]));
+    // Save to Firestore
+    await saveSocialBubbles(updatedSocialLinks);
+    showMessage(`Contact "${name}" added successfully!`);
   };
   
-  const handleEditSocial = (id, newName, newUrl, size, color) => {
+  const handleEditSocial = async (id, newName, newUrl, size, color) => {
     const validUrl = newUrl.startsWith('http') ? newUrl : `https://${newUrl}`;
     
     const updatedSocialLinks = socialLinks.map(social =>
@@ -481,13 +427,13 @@ const Contacts = () => {
     );
     
     setSocialLinks(updatedSocialLinks);
-    showMessage(`Contact updated successfully!`);
     
-    // Save to localStorage
-    localStorage.setItem('contactLinks', JSON.stringify(updatedSocialLinks));
+    // Save to Firestore
+    await saveSocialBubbles(updatedSocialLinks);
+    showMessage(`Contact updated successfully!`);
   };
   
-  const handleMoveBubble = (name, x, y) => {
+  const handleMoveBubble = async (name, x, y) => {
     const updatedSocialLinks = socialLinks.map(social =>
       social.id === name
         ? { 
@@ -499,13 +445,13 @@ const Contacts = () => {
     );
     
     setSocialLinks(updatedSocialLinks);
-    showMessage(`Moved "${name}" to position (${x}, ${y})`);
     
-    // Save to localStorage
-    localStorage.setItem('contactLinks', JSON.stringify(updatedSocialLinks));
+    // Save to Firestore
+    await saveSocialBubbles(updatedSocialLinks);
+    showMessage(`Moved "${name}" to position (${x}, ${y})`);
   };
   
-  const handleResizeBubble = (name, size) => {
+  const handleResizeBubble = async (name, size) => {
     const updatedSocialLinks = socialLinks.map(social =>
       social.id === name
         ? { 
@@ -516,13 +462,13 @@ const Contacts = () => {
     );
     
     setSocialLinks(updatedSocialLinks);
-    showMessage(`Resized "${name}" to ${size}px`);
     
-    // Save to localStorage
-    localStorage.setItem('contactLinks', JSON.stringify(updatedSocialLinks));
+    // Save to Firestore
+    await saveSocialBubbles(updatedSocialLinks);
+    showMessage(`Resized "${name}" to ${size}px`);
   };
   
-  const handleColorBubble = (name, color) => {
+  const handleColorBubble = async (name, color) => {
     const updatedSocialLinks = socialLinks.map(social =>
       social.id === name
         ? { ...social, color: color }
@@ -530,21 +476,21 @@ const Contacts = () => {
     );
     
     setSocialLinks(updatedSocialLinks);
-    showMessage(`Changed "${name}" color to ${color}`);
     
-    // Save to localStorage
-    localStorage.setItem('contactLinks', JSON.stringify(updatedSocialLinks));
+    // Save to Firestore
+    await saveSocialBubbles(updatedSocialLinks);
+    showMessage(`Changed "${name}" color to ${color}`);
   };
   
-  const handleRemoveSocial = (id) => {
+  const handleRemoveSocial = async (id) => {
     const socialToRemove = socialLinks.find(s => s.id === id);
     if (socialToRemove && window.confirm(`Are you sure you want to remove "${id}" contact?`)) {
       const updatedSocialLinks = socialLinks.filter(social => social.id !== id);
       setSocialLinks(updatedSocialLinks);
-      showMessage(`Contact "${id}" removed successfully!`);
       
-      // Save to localStorage
-      localStorage.setItem('contactLinks', JSON.stringify(updatedSocialLinks));
+      // Save to Firestore
+      await saveSocialBubbles(updatedSocialLinks);
+      showMessage(`Contact "${id}" removed successfully!`);
     }
   };
   
@@ -592,7 +538,7 @@ const Contacts = () => {
             
             <div className="homepage-description">
               <ul>
-                <li><strong>Hola, </strong> I'd love to hear from you! Whether you have a question, a project idea, or just want to connect, feel free to reach out anytime. Use the live chat to start a conversation in real-time, explore the links to my work, or see where I’m currently based. I'm always happy to talk and aim to reply promptly. Let’s connect!</li>
+                <li><strong>Hola, </strong>{contactsData.description || "Loading contact information..."}</li>
                 <li><strong>You may use the following to contact me</strong></li>
               </ul>
             </div>
@@ -812,19 +758,19 @@ const Contacts = () => {
                   </div>
                   <div className="location-status">
                     <span className="status-indicator online"></span>
-                    <span>Available</span>
+                    <span>{contactsData.locationDetails?.status || 'Available'}</span>
                   </div>
                 </div>
                 
                 <div className="location-details">
                   <div className="detail-item">
-                    <strong>📍 Location:</strong> Khanna City, Punjab, India
+                    <strong>📍 Location:</strong> {contactsData.locationDetails?.location || 'Location not set'}
                   </div>
                   <div className="detail-item">
                     <strong>🕒 Current Time:</strong> {currentTime.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' })} IST
                   </div>
                   <div className="detail-item">
-                    <strong>📧 Response Time:</strong> within 24 hours
+                    <strong>📧 Response Time:</strong> {contactsData.locationDetails?.responseTime || 'within 24 hours'}
                   </div>
                 </div>
               </div>
@@ -892,6 +838,65 @@ const Contacts = () => {
       }
     };
   }, []);
+  
+  // Load contacts data from Firestore
+  const loadContactsData = useCallback(async () => {
+    try {
+      const data = await getContactsData();
+      setContactsData(data);
+      
+      // Convert socialBubbles to socialLinks with icons
+      if (data.socialBubbles) {
+        const linksWithIcons = data.socialBubbles.map(bubble => ({
+          ...bubble,
+          icon: getDefaultIcon(bubble.id)
+        }));
+        setSocialLinks(linksWithIcons);
+      }
+      
+      showMessage('Contacts data loaded from Firestore successfully!');
+    } catch (error) {
+      console.error('Error loading contacts data:', error);
+      showMessage('Error loading contacts data from Firestore');
+    }
+  }, []);
+
+  // Save social bubbles to Firestore
+  const saveSocialBubbles = async (bubbles) => {
+    try {
+      // Remove icons before saving to Firestore
+      const bubblesForFirestore = bubbles.map(({ icon, ...bubble }) => bubble);
+      await updateSocialBubbles(bubblesForFirestore);
+      showMessage('Social bubbles saved to Firestore successfully!');
+    } catch (error) {
+      console.error('Error saving social bubbles:', error);
+      showMessage('Error saving social bubbles to Firestore');
+    }
+  };
+
+  // Load data on component mount and set up real-time listener
+  useEffect(() => {
+    loadContactsData();
+    
+    // Set up real-time listener for contacts data updates
+    const unsubscribe = subscribeToContactsData((data) => {
+      if (data) {
+        setContactsData(data);
+        
+        // Update social links with icons
+        if (data.socialBubbles) {
+          const linksWithIcons = data.socialBubbles.map(bubble => ({
+            ...bubble,
+            icon: getDefaultIcon(bubble.id)
+          }));
+          setSocialLinks(linksWithIcons);
+        }
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [loadContactsData]);
   
   return (
     <div className="homepage">

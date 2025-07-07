@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css'; // Reusing Homepage.css
 import './Controller.css'; // New styles for Controller component
@@ -9,7 +9,6 @@ import {
   updateAuthorDescription, 
   updateAuthorSkills,
   subscribeToHomepageData,
-  initializeHomepageData,
   // Document management imports
   getDocumentsData,
   updateDocuments,
@@ -21,7 +20,13 @@ import {
   // About management imports
   getAboutData,
   updateAboutData,
-  subscribeToAboutData
+  subscribeToAboutData,
+  // Contacts management imports
+  getContactsData,
+  updateContactsDescription,
+  updateSocialBubbles,
+  updateLocationDetails,
+  subscribeToContactsData
 } from '../firebase/firestoreService';
 
 const Controller = () => {
@@ -84,6 +89,49 @@ const Controller = () => {
   const [aboutFormData, setAboutFormData] = useState({
     githubUsername: '',
     repositoryName: ''
+  });
+
+  // Contacts data states
+  const [contactsData, setContactsData] = useState({
+    description: '',
+    socialBubbles: [],
+    locationDetails: {
+      location: '',
+      responseTime: '',
+      status: ''
+    }
+  });
+  
+  // Contacts Description Management
+  const [contactsDescriptionManager, setContactsDescriptionManager] = useState({
+    isEditing: false,
+    tempDescription: ''
+  });
+  
+  // Social Bubbles Management  
+  const [socialBubblesManager, setSocialBubblesManager] = useState({
+    isEditing: false,
+    editingBubbleId: null,
+    tempBubbles: [],
+    isAddingNew: false,
+    newBubbleData: {
+      id: '',
+      url: '',
+      size: 70,
+      color: '#be00ff',
+      x: 50,
+      y: 50
+    }
+  });
+  
+  // Location Details Management
+  const [locationDetailsManager, setLocationDetailsManager] = useState({
+    isEditing: false,
+    tempLocationData: {
+      location: '',
+      responseTime: '',
+      status: ''
+    }
   });
 
   // Navigation links (reusing social links design)
@@ -150,7 +198,7 @@ const Controller = () => {
   };
 
   // Load Homepage data from Firestore
-  const loadHomepageData = async () => {
+  const loadHomepageData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -181,7 +229,7 @@ const Controller = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Save data to Firestore and dispatch event
   const saveToFirestore = async (updateFunction, data, successMessage) => {
@@ -317,7 +365,7 @@ const Controller = () => {
   };
 
   // Document management functions
-  const loadDocumentsData = async () => {
+  const loadDocumentsData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -336,7 +384,7 @@ const Controller = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Filter documents by type
   const getDocumentsByFilter = () => {
@@ -515,7 +563,7 @@ const Controller = () => {
   };
 
   // Project management functions
-  const loadProjectsData = async () => {
+  const loadProjectsData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -534,7 +582,7 @@ const Controller = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Filter projects by type
   const getProjectsByFilter = () => {
@@ -720,7 +768,7 @@ const Controller = () => {
   // === ABOUT DATA MANAGEMENT ===
   
   // Load About data from Firestore
-  const loadAboutData = async () => {
+  const loadAboutData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -736,9 +784,17 @@ const Controller = () => {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Generate README URL from form data
+  const generateReadmeUrl = () => {
+    if (aboutFormData.githubUsername && aboutFormData.repositoryName) {
+      return `https://api.github.com/repos/${aboutFormData.githubUsername}/${aboutFormData.repositoryName}/readme`;
+    }
+    return '';
   };
 
-  // Handle about data editing
+  // Handle editing about data
   const handleEditAboutData = () => {
     setEditingAboutData(true);
     setAboutFormData({
@@ -747,47 +803,283 @@ const Controller = () => {
     });
   };
 
-  // Save about data
+  // Handle saving about data
   const handleSaveAboutData = async () => {
     try {
-      if (!aboutFormData.githubUsername || !aboutFormData.repositoryName) {
-        showMessage('Please fill in both GitHub username and repository name');
-        return;
-      }
-      
       setLoading(true);
-      
-      const updatedAboutData = {
-        githubUsername: aboutFormData.githubUsername.trim(),
-        repositoryName: aboutFormData.repositoryName.trim(),
-        githubReadmeUrl: `https://api.github.com/repos/${aboutFormData.githubUsername.trim()}/${aboutFormData.repositoryName.trim()}/readme`
+      const updatedData = {
+        ...aboutData,
+        githubUsername: aboutFormData.githubUsername,
+        repositoryName: aboutFormData.repositoryName,
+        githubReadmeUrl: generateReadmeUrl()
       };
       
-      await updateAboutData(updatedAboutData);
-      setAboutData(updatedAboutData);
-      
-      // Dispatch event to notify About.js component
-      window.dispatchEvent(new CustomEvent('aboutDataUpdated', { 
-        detail: { aboutData: updatedAboutData, timestamp: new Date().toISOString() } 
-      }));
-      
-      showMessage('About data updated successfully!');
+      await updateAboutData(updatedData);
+      setAboutData(updatedData);
+      setEditingAboutData(false);
+      showMessage('About data saved successfully!');
     } catch (error) {
-      console.error('Error updating about data:', error);
-      setError('Failed to update about data');
-      showMessage('Error updating about data');
+      console.error('Error saving about data:', error);
+      setError('Failed to save about data');
+      showMessage('Error saving about data');
     } finally {
       setLoading(false);
-      setEditingAboutData(null);
     }
   };
 
-  // Generate GitHub README URL preview
-  const generateReadmeUrl = () => {
-    if (aboutFormData.githubUsername && aboutFormData.repositoryName) {
-      return `https://api.github.com/repos/${aboutFormData.githubUsername.trim()}/${aboutFormData.repositoryName.trim()}/readme`;
+  // === CONTACTS DATA MANAGEMENT ===
+  
+  // Load Contacts data from Firestore
+  const loadContactsData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const data = await getContactsData();
+      setContactsData(data);
+      
+      showMessage('Contacts data loaded from Firestore successfully!');
+    } catch (error) {
+      console.error('Error loading contacts data:', error);
+      setError('Failed to load contacts data from Firestore');
+      showMessage('Error loading contacts data from Firestore');
+    } finally {
+      setLoading(false);
     }
-    return '';
+  }, []);
+
+  // === CONTACTS DESCRIPTION MANAGEMENT ===
+  
+  const contactsDescriptionManagementComponent = {
+    startEditing: () => {
+      setContactsDescriptionManager({
+        isEditing: true,
+        tempDescription: contactsData.description
+      });
+    },
+    
+    cancelEditing: () => {
+      setContactsDescriptionManager({
+        isEditing: false,
+        tempDescription: ''
+      });
+    },
+    
+    updateTempDescription: (description) => {
+      setContactsDescriptionManager(prev => ({
+        ...prev,
+        tempDescription: description
+      }));
+    },
+    
+    saveDescription: async () => {
+      try {
+        setLoading(true);
+        await updateContactsDescription(contactsDescriptionManager.tempDescription);
+        setContactsData(prev => ({
+          ...prev,
+          description: contactsDescriptionManager.tempDescription
+        }));
+        setContactsDescriptionManager({
+          isEditing: false,
+          tempDescription: ''
+        });
+        showMessage('Contacts description updated successfully!');
+      } catch (error) {
+        console.error('Error updating contacts description:', error);
+        setError('Failed to update contacts description');
+        showMessage('Error updating contacts description');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // === SOCIAL BUBBLES MANAGEMENT ===
+  
+  const socialBubblesManagementComponent = {
+    startEditing: () => {
+      setSocialBubblesManager({
+        isEditing: true,
+        editingBubbleId: null,
+        tempBubbles: [...contactsData.socialBubbles],
+        isAddingNew: false,
+        newBubbleData: {
+          id: '',
+          url: '',
+          size: 70,
+          color: '#be00ff',
+          x: 50,
+          y: 50
+        }
+      });
+    },
+    
+    cancelEditing: () => {
+      setSocialBubblesManager({
+        isEditing: false,
+        editingBubbleId: null,
+        tempBubbles: [],
+        isAddingNew: false,
+        newBubbleData: {
+          id: '',
+          url: '',
+          size: 70,
+          color: '#be00ff',
+          x: 50,
+          y: 50
+        }
+      });
+    },
+    
+    startEditingBubble: (bubbleId) => {
+      setSocialBubblesManager(prev => ({
+        ...prev,
+        editingBubbleId: bubbleId
+      }));
+    },
+    
+    updateTempBubble: (bubbleId, field, value) => {
+      setSocialBubblesManager(prev => ({
+        ...prev,
+        tempBubbles: prev.tempBubbles.map(bubble =>
+          bubble.id === bubbleId ? { ...bubble, [field]: value } : bubble
+        )
+      }));
+    },
+    
+    startAddingNew: () => {
+      setSocialBubblesManager(prev => ({
+        ...prev,
+        isAddingNew: true,
+        newBubbleData: {
+          id: '',
+          url: '',
+          size: 70,
+          color: '#be00ff',
+          x: 50,
+          y: 50
+        }
+      }));
+    },
+    
+    updateNewBubbleData: (field, value) => {
+      setSocialBubblesManager(prev => ({
+        ...prev,
+        newBubbleData: { ...prev.newBubbleData, [field]: value }
+      }));
+    },
+    
+    addNewBubble: () => {
+      const newBubble = { ...socialBubblesManager.newBubbleData };
+      setSocialBubblesManager(prev => ({
+        ...prev,
+        tempBubbles: [...prev.tempBubbles, newBubble],
+        isAddingNew: false,
+        newBubbleData: {
+          id: '',
+          url: '',
+          size: 70,
+          color: '#be00ff',
+          x: 50,
+          y: 50
+        }
+      }));
+    },
+    
+    deleteBubble: (bubbleId) => {
+      setSocialBubblesManager(prev => ({
+        ...prev,
+        tempBubbles: prev.tempBubbles.filter(bubble => bubble.id !== bubbleId)
+      }));
+    },
+    
+    saveBubbles: async () => {
+      try {
+        setLoading(true);
+        await updateSocialBubbles(socialBubblesManager.tempBubbles);
+        setContactsData(prev => ({
+          ...prev,
+          socialBubbles: socialBubblesManager.tempBubbles
+        }));
+        setSocialBubblesManager({
+          isEditing: false,
+          editingBubbleId: null,
+          tempBubbles: [],
+          isAddingNew: false,
+          newBubbleData: {
+            id: '',
+            url: '',
+            size: 70,
+            color: '#be00ff',
+            x: 50,
+            y: 50
+          }
+        });
+        showMessage('Social bubbles updated successfully!');
+      } catch (error) {
+        console.error('Error updating social bubbles:', error);
+        setError('Failed to update social bubbles');
+        showMessage('Error updating social bubbles');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // === LOCATION DETAILS MANAGEMENT ===
+  
+  const locationDetailsManagementComponent = {
+    startEditing: () => {
+      setLocationDetailsManager({
+        isEditing: true,
+        tempLocationData: { ...contactsData.locationDetails }
+      });
+    },
+    
+    cancelEditing: () => {
+      setLocationDetailsManager({
+        isEditing: false,
+        tempLocationData: {
+          location: '',
+          responseTime: '',
+          status: ''
+        }
+      });
+    },
+    
+    updateTempLocationField: (field, value) => {
+      setLocationDetailsManager(prev => ({
+        ...prev,
+        tempLocationData: { ...prev.tempLocationData, [field]: value }
+      }));
+    },
+    
+    saveLocationDetails: async () => {
+      try {
+        setLoading(true);
+        await updateLocationDetails(locationDetailsManager.tempLocationData);
+        setContactsData(prev => ({
+          ...prev,
+          locationDetails: locationDetailsManager.tempLocationData
+        }));
+        setLocationDetailsManager({
+          isEditing: false,
+          tempLocationData: {
+            location: '',
+            responseTime: '',
+            status: ''
+          }
+        });
+        showMessage('Location details updated successfully!');
+      } catch (error) {
+        console.error('Error updating location details:', error);
+        setError('Failed to update location details');
+        showMessage('Error updating location details');
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   // Render content based on active section
@@ -1462,8 +1754,273 @@ const Controller = () => {
       case 'contacts':
         return (
           <div className="section-content">
-            <h2>Contacts</h2>
-            <p>Contacts section content</p>
+            <h2>Contacts Management</h2>
+            
+            {/* Contacts Description Management */}
+            <div className="management-section">
+              <h3>Description Text Management</h3>
+              <div className="management-controls">
+                {!contactsDescriptionManager.isEditing ? (
+                  <div>
+                    <div className="current-data">
+                      <strong>Current Description:</strong>
+                      <p className="data-preview">{contactsData.description || 'No description set'}</p>
+                    </div>
+                    <button 
+                      className="btn-primary"
+                      onClick={contactsDescriptionManagementComponent.startEditing}
+                    >
+                      Edit Description
+                    </button>
+                  </div>
+                ) : (
+                  <div className="edit-form">
+                    <div className="form-group">
+                      <label>Description Text:</label>
+                      <textarea
+                        value={contactsDescriptionManager.tempDescription}
+                        onChange={(e) => contactsDescriptionManagementComponent.updateTempDescription(e.target.value)}
+                        rows="4"
+                        placeholder="Enter description text..."
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button 
+                        className="btn-success"
+                        onClick={contactsDescriptionManagementComponent.saveDescription}
+                        disabled={loading}
+                      >
+                        {loading ? 'Saving...' : 'Save'}
+                      </button>
+                      <button 
+                        className="btn-secondary"
+                        onClick={contactsDescriptionManagementComponent.cancelEditing}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Social Bubbles Management */}
+            <div className="management-section">
+              <h3>Social Media Bubbles Management</h3>
+              <div className="management-controls">
+                {!socialBubblesManager.isEditing ? (
+                  <div>
+                    <div className="current-data">
+                      <strong>Current Social Bubbles:</strong>
+                      <div className="bubbles-preview">
+                        {contactsData.socialBubbles?.map(bubble => (
+                          <div key={bubble.id} className="bubble-item">
+                            <span>{bubble.id}</span> - <span>{bubble.url}</span>
+                          </div>
+                        )) || 'No social bubbles set'}
+                      </div>
+                    </div>
+                    <button 
+                      className="btn-primary"
+                      onClick={socialBubblesManagementComponent.startEditing}
+                    >
+                      Manage Social Bubbles
+                    </button>
+                  </div>
+                ) : (
+                  <div className="edit-form">
+                    <div className="bubbles-list">
+                      {socialBubblesManager.tempBubbles.map(bubble => (
+                        <div key={bubble.id} className="bubble-edit-item">
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>ID:</label>
+                              <input
+                                type="text"
+                                value={bubble.id}
+                                onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'id', e.target.value)}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>URL:</label>
+                              <input
+                                type="text"
+                                value={bubble.url}
+                                onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'url', e.target.value)}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Size:</label>
+                              <input
+                                type="number"
+                                value={bubble.size}
+                                onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'size', parseInt(e.target.value))}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Color:</label>
+                              <input
+                                type="color"
+                                value={bubble.color}
+                                onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'color', e.target.value)}
+                              />
+                            </div>
+                            <button 
+                              className="btn-danger"
+                              onClick={() => socialBubblesManagementComponent.deleteBubble(bubble.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {socialBubblesManager.isAddingNew && (
+                      <div className="new-bubble-form">
+                        <h4>Add New Bubble</h4>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>ID:</label>
+                            <input
+                              type="text"
+                              value={socialBubblesManager.newBubbleData.id}
+                              onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('id', e.target.value)}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>URL:</label>
+                            <input
+                              type="text"
+                              value={socialBubblesManager.newBubbleData.url}
+                              onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('url', e.target.value)}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Size:</label>
+                            <input
+                              type="number"
+                              value={socialBubblesManager.newBubbleData.size}
+                              onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('size', parseInt(e.target.value))}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Color:</label>
+                            <input
+                              type="color"
+                              value={socialBubblesManager.newBubbleData.color}
+                              onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('color', e.target.value)}
+                            />
+                          </div>
+                          <button 
+                            className="btn-success"
+                            onClick={socialBubblesManagementComponent.addNewBubble}
+                          >
+                            Add Bubble
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="form-actions">
+                      <button 
+                        className="btn-secondary"
+                        onClick={socialBubblesManagementComponent.startAddingNew}
+                      >
+                        Add New Bubble
+                      </button>
+                      <button 
+                        className="btn-success"
+                        onClick={socialBubblesManagementComponent.saveBubbles}
+                        disabled={loading}
+                      >
+                        {loading ? 'Saving...' : 'Save All Changes'}
+                      </button>
+                      <button 
+                        className="btn-secondary"
+                        onClick={socialBubblesManagementComponent.cancelEditing}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Location Details Management */}
+            <div className="management-section">
+              <h3>Location Details Management</h3>
+              <div className="management-controls">
+                {!locationDetailsManager.isEditing ? (
+                  <div>
+                    <div className="current-data">
+                      <strong>Current Location Details:</strong>
+                      <div className="location-preview">
+                        <p><strong>Location:</strong> {contactsData.locationDetails?.location || 'Not set'}</p>
+                        <p><strong>Response Time:</strong> {contactsData.locationDetails?.responseTime || 'Not set'}</p>
+                        <p><strong>Status:</strong> {contactsData.locationDetails?.status || 'Not set'}</p>
+                      </div>
+                    </div>
+                    <button 
+                      className="btn-primary"
+                      onClick={locationDetailsManagementComponent.startEditing}
+                    >
+                      Edit Location Details
+                    </button>
+                  </div>
+                ) : (
+                  <div className="edit-form">
+                    <div className="form-group">
+                      <label>Location:</label>
+                      <input
+                        type="text"
+                        value={locationDetailsManager.tempLocationData.location}
+                        onChange={(e) => locationDetailsManagementComponent.updateTempLocationField('location', e.target.value)}
+                        placeholder="e.g., New York, NY, USA"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Response Time:</label>
+                      <input
+                        type="text"
+                        value={locationDetailsManager.tempLocationData.responseTime}
+                        onChange={(e) => locationDetailsManagementComponent.updateTempLocationField('responseTime', e.target.value)}
+                        placeholder="e.g., within 24 hours"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Status:</label>
+                      <select
+                        value={locationDetailsManager.tempLocationData.status}
+                        onChange={(e) => locationDetailsManagementComponent.updateTempLocationField('status', e.target.value)}
+                      >
+                        <option value="">Select status...</option>
+                        <option value="Available">Available</option>
+                        <option value="Busy">Busy</option>
+                        <option value="Away">Away</option>
+                        <option value="Do Not Disturb">Do Not Disturb</option>
+                      </select>
+                    </div>
+                    <div className="form-actions">
+                      <button 
+                        className="btn-success"
+                        onClick={locationDetailsManagementComponent.saveLocationDetails}
+                        disabled={loading}
+                      >
+                        {loading ? 'Saving...' : 'Save'}
+                      </button>
+                      <button 
+                        className="btn-secondary"
+                        onClick={locationDetailsManagementComponent.cancelEditing}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         );
       default:
@@ -1503,6 +2060,7 @@ const Controller = () => {
       loadDocumentsData();
       loadProjectsData();
       loadAboutData();
+      loadContactsData();
       
       // Set up real-time listener for Firestore updates
       const unsubscribeHomepage = subscribeToHomepageData((data) => {
@@ -1545,15 +2103,23 @@ const Controller = () => {
         }
       });
 
+      // Set up real-time listener for contacts data updates
+      const unsubscribeContacts = subscribeToContactsData((data) => {
+        if (data) {
+          setContactsData(data);
+        }
+      });
+
       // Cleanup subscriptions on unmount
       return () => {
         unsubscribeHomepage();
         unsubscribeDocuments();
         unsubscribeProjects();
         unsubscribeAbout();
+        unsubscribeContacts();
       };
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loadHomepageData, loadDocumentsData, loadProjectsData, loadAboutData, loadContactsData]);
 
   // Allowed document types
   const allowedDocTypes = [

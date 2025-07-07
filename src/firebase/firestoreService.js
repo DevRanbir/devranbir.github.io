@@ -4,9 +4,7 @@ import {
   getDoc, 
   setDoc, 
   updateDoc, 
-  onSnapshot,
-  collection,
-  getDocs 
+  onSnapshot
 } from 'firebase/firestore';
 
 // Document ID for homepage data
@@ -17,12 +15,15 @@ const DOCUMENTS_DOC_ID = 'documents-data';
 const PROJECTS_DOC_ID = 'projects-data';
 // Document ID for about data
 const ABOUT_DOC_ID = 'about-data';
+// Document ID for contacts data
+const CONTACTS_DOC_ID = 'contacts-data';
 
 // Collection and document references
 const homepageDocRef = doc(db, 'website-content', HOMEPAGE_DOC_ID);
 const documentsDocRef = doc(db, 'website-content', DOCUMENTS_DOC_ID);
 const projectsDocRef = doc(db, 'website-content', PROJECTS_DOC_ID);
 const aboutDocRef = doc(db, 'website-content', ABOUT_DOC_ID);
+const contactsDocRef = doc(db, 'website-content', CONTACTS_DOC_ID);
 
 // Default data structure
 const defaultData = {
@@ -55,6 +56,25 @@ const defaultAboutData = {
   githubReadmeUrl: 'https://api.github.com/repos/DevRanbir/DevRanbir/readme',
   githubUsername: 'DevRanbir',
   repositoryName: 'DevRanbir',
+  lastUpdated: new Date().toISOString()
+};
+
+// Default contacts data structure
+const defaultContactsData = {
+  description: "Hola, I'd love to hear from you! Whether you have a question, a project idea, or just want to connect, feel free to reach out anytime. Use the live chat to start a conversation in real-time, explore the links to my work, or see where I'm currently based. I'm always happy to talk and aim to reply promptly. Let's connect!",
+  socialBubbles: [
+    { id: 'email', url: 'mailto:your.email@example.com', size: 80, color: '#be00ff', x: 15, y: 20 },
+    { id: 'phone', url: 'tel:+1234567890', size: 65, color: '#8b00cc', x: 70, y: 15 },
+    { id: 'linkedin', url: 'https://linkedin.com/in/yourname', size: 90, color: '#e600ff', x: 25, y: 55 },
+    { id: 'twitter', url: 'https://twitter.com/yourname', size: 70, color: '#d400e6', x: 75, y: 60 },
+    { id: 'github', url: 'https://github.com/yourname', size: 85, color: '#be00ff', x: 50, y: 85 },
+    { id: 'discord', url: 'https://discord.gg/yourserver', size: 75, color: '#cc00e6', x: 10, y: 80 }
+  ],
+  locationDetails: {
+    location: 'Khanna City, Punjab, India',
+    responseTime: 'within 24 hours',
+    status: 'Available'
+  },
   lastUpdated: new Date().toISOString()
 };
 
@@ -356,3 +376,93 @@ export const subscribeToAboutData = (callback) => {
     }
   });
 };
+
+// Contacts Related Functions
+
+// Initialize contacts data with default values if document doesn't exist
+export const initializeContactsData = async () => {
+  try {
+    const docSnap = await getDoc(contactsDocRef);
+    
+    if (!docSnap.exists()) {
+      await setDoc(contactsDocRef, defaultContactsData);
+      console.log('Contacts data initialized with default values');
+      return defaultContactsData;
+    } else {
+      console.log('Contacts data already exists');
+      return docSnap.data();
+    }
+  } catch (error) {
+    console.error('Error initializing contacts data:', error);
+    throw error;
+  }
+};
+
+// Get contacts data from Firestore
+export const getContactsData = async () => {
+  try {
+    const docSnap = await getDoc(contactsDocRef);
+    
+    if (docSnap.exists()) {
+      return docSnap.data();
+    } else {
+      // If document doesn't exist, initialize it
+      return await initializeContactsData();
+    }
+  } catch (error) {
+    console.error('Error getting contacts data:', error);
+    throw error;
+  }
+};
+
+// Update contacts description
+export const updateContactsDescription = async (description) => {
+  try {
+    await updateDoc(contactsDocRef, {
+      description: description,
+      lastUpdated: new Date().toISOString()
+    });
+    console.log('Contacts description updated successfully');
+  } catch (error) {
+    console.error('Error updating contacts description:', error);
+    throw error;
+  }
+};
+
+// Update social media bubbles
+export const updateSocialBubbles = async (socialBubbles) => {
+  try {
+    await updateDoc(contactsDocRef, {
+      socialBubbles: socialBubbles,
+      lastUpdated: new Date().toISOString()
+    });
+    console.log('Social bubbles updated successfully');
+  } catch (error) {
+    console.error('Error updating social bubbles:', error);
+    throw error;
+  }
+};
+
+// Update location details
+export const updateLocationDetails = async (locationDetails) => {
+  try {
+    await updateDoc(contactsDocRef, {
+      locationDetails: locationDetails,
+      lastUpdated: new Date().toISOString()
+    });
+    console.log('Location details updated successfully');
+  } catch (error) {
+    console.error('Error updating location details:', error);
+    throw error;
+  }
+};
+
+// Listen to real-time updates for contacts data
+export const subscribeToContactsData = (callback) => {
+  return onSnapshot(contactsDocRef, (doc) => {
+    if (doc.exists()) {
+      callback(doc.data());
+    }
+  });
+};
+
