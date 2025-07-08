@@ -8,6 +8,9 @@ import Contacts from './components/Contacts';
 import Controller from './components/Controller';
 import './App.css';
 
+// Import chat cleanup utility (automatically starts cleanup)
+import './utils/chatCleanup';
+
 function App() {
   return (
     <div className="App">

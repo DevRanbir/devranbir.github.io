@@ -4,7 +4,16 @@ import {
   getDoc, 
   setDoc, 
   updateDoc, 
-  onSnapshot
+  deleteDoc,
+  onSnapshot,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  where,
+  serverTimestamp,
+  getDocs
 } from 'firebase/firestore';
 
 // Document ID for homepage data
@@ -17,6 +26,9 @@ const PROJECTS_DOC_ID = 'projects-data';
 const ABOUT_DOC_ID = 'about-data';
 // Document ID for contacts data
 const CONTACTS_DOC_ID = 'contacts-data';
+
+// Chat collection reference
+const CHAT_COLLECTION = 'chat-messages';
 
 // Collection and document references
 const homepageDocRef = doc(db, 'website-content', HOMEPAGE_DOC_ID);
@@ -464,5 +476,360 @@ export const subscribeToContactsData = (callback) => {
       callback(doc.data());
     }
   });
+};
+
+// ====================== CHAT FUNCTIONS ======================
+
+// Generate anonymous user ID
+export const generateAnonymousUserId = () => {
+  return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// Send a message to chat
+export const sendChatMessage = async (message, userId, userName = null) => {
+  try {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000)); // 2 hours from now
+    
+    const chatMessage = {
+      message: message.trim(),
+      userId: userId,
+      userName: userName || `Anonymous User`,
+      timestamp: serverTimestamp(),
+      createdAt: now.toISOString(),
+      expiresAt: expiresAt, // TTL field for automatic deletion
+      isFromTelegram: false,
+      messageType: 'user'
+    };
+
+    const docRef = await addDoc(collection(db, CHAT_COLLECTION), chatMessage);
+    console.log('Message sent successfully with ID:', docRef.id);
+    
+    // Trigger Telegram bot webhook (if configured)
+    await notifyTelegramBot(chatMessage, docRef.id);
+    
+    return docRef.id;
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+};
+
+// Send response from Telegram bot
+export const sendTelegramResponse = async (message, userId, originalMessageId = null) => {
+  try {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000)); // 2 hours from now
+    
+    const chatMessage = {
+      message: message.trim(),
+      userId: userId,
+      userName: 'Support Team',
+      timestamp: serverTimestamp(),
+      createdAt: now.toISOString(),
+      expiresAt: expiresAt, // TTL field for automatic deletion
+      isFromTelegram: true,
+      messageType: 'support',
+      originalMessageId: originalMessageId
+    };
+
+    const docRef = await addDoc(collection(db, CHAT_COLLECTION), chatMessage);
+    console.log('Telegram response sent successfully with ID:', docRef.id, 'for user:', userId);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error sending Telegram response:', error);
+    throw error;
+  }
+};
+
+// Subscribe to chat messages for a user
+export const subscribeToChatMessages = (userId, callback) => {
+  try {
+    const q = query(
+      collection(db, CHAT_COLLECTION),
+      where('userId', '==', userId),
+      orderBy('timestamp', 'desc'),
+      limit(50)
+    );
+
+    return onSnapshot(q, (querySnapshot) => {
+      const messages = [];
+      querySnapshot.forEach((doc) => {
+        const docData = doc.data();
+        messages.push({
+          id: doc.id,
+          ...docData
+        });
+      });
+      
+      console.log(`📨 Found ${messages.length} messages for user ${userId}:`, messages);
+      
+      // Handle both Firebase timestamps and JavaScript Date objects
+      messages.sort((a, b) => {
+        // Handle both Firebase timestamps and JavaScript Date objects
+        let timeA, timeB;
+        
+        if (a.timestamp?.toMillis) {
+          timeA = a.timestamp.toMillis();
+        } else if (a.timestamp?.getTime) {
+          timeA = a.timestamp.getTime();
+        } else {
+          timeA = new Date(a.createdAt).getTime();
+        }
+        
+        if (b.timestamp?.toMillis) {
+          timeB = b.timestamp.toMillis();
+        } else if (b.timestamp?.getTime) {
+          timeB = b.timestamp.getTime();
+        } else {
+          timeB = new Date(b.createdAt).getTime();
+        }
+        
+        return timeA - timeB;
+      });
+      
+      callback(messages);
+    });
+  } catch (error) {
+    console.error('Error subscribing to chat messages:', error);
+    throw error;
+  }
+};
+
+// Subscribe to all chat messages (for admin/bot)
+export const subscribeToAllChatMessages = (callback) => {
+  try {
+    const q = query(
+      collection(db, CHAT_COLLECTION),
+      orderBy('timestamp', 'desc'),
+      limit(100)
+    );
+
+    return onSnapshot(q, (querySnapshot) => {
+      const messages = [];
+      querySnapshot.forEach((doc) => {
+        messages.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      callback(messages);
+    });
+  } catch (error) {
+    console.error('Error subscribing to all chat messages:', error);
+    throw error;
+  }
+};
+
+// Notify Telegram bot about new message
+const notifyTelegramBot = async (message, messageId) => {
+  try {
+    // Import the Telegram service dynamically to avoid circular dependencies
+    const { notifyTelegramBot: telegramNotify } = await import('../services/telegramService');
+    
+    const messageData = {
+      ...message,
+      messageId: messageId
+    };
+    
+    await telegramNotify(messageData);
+    
+  } catch (error) {
+    console.error('Error notifying Telegram bot:', error);
+    // Don't throw error as this shouldn't block the main chat functionality
+  }
+};
+
+/**
+ * Comprehensive test function to verify the complete message flow
+ * Call this function from the browser console to test the chat system
+ */
+export const testCompleteMessageFlow = async (testUserId = 'test-user-flow') => {
+  try {
+    console.log('🧪 Starting complete message flow test...');
+    
+    // Step 1: Send a user message (simulate website message)
+    console.log('📤 Step 1: Sending user message...');
+    const userMessageId = await sendChatMessage(
+      'This is a test message from the website', 
+      testUserId, 
+      'Test User'
+    );
+    console.log('✅ User message sent with ID:', userMessageId);
+    
+    // Step 2: Simulate Telegram response (what should happen when admin replies)
+    console.log('📤 Step 2: Sending test Telegram response...');
+    const telegramResponseId = await sendTelegramResponse(
+      'This is a test response from Telegram support',
+      testUserId,
+      userMessageId
+    );
+    console.log('✅ Telegram response sent with ID:', telegramResponseId);
+    
+    // Step 3: Subscribe to messages and verify both appear
+    console.log('👂 Step 3: Listening for messages...');
+    const unsubscribe = subscribeToChatMessages(testUserId, (messages) => {
+      console.log(`📨 Received ${messages.length} messages for user ${testUserId}:`);
+      messages.forEach((msg, index) => {
+        console.log(`  ${index + 1}. [${msg.messageType}] ${msg.userName}: ${msg.message}`);
+        console.log(`     - ID: ${msg.id}`);
+        console.log(`     - From Telegram: ${msg.isFromTelegram || false}`);
+        console.log(`     - Timestamp: ${msg.timestamp || msg.createdAt}`);
+      });
+      
+      if (messages.length >= 2) {
+        console.log('✅ Both messages found! Flow test successful.');
+        unsubscribe(); // Stop listening after verification
+      }
+    });
+    
+    // Stop test after 10 seconds if not completed
+    setTimeout(() => {
+      unsubscribe();
+      console.log('⏰ Test timeout reached');
+    }, 10000);
+    
+    return {
+      success: true,
+      testUserId,
+      userMessageId,
+      telegramResponseId
+    };
+    
+  } catch (error) {
+    console.error('❌ Message flow test failed:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Delete expired chat messages (older than 2 hours)
+ * This function should be called periodically to clean up old messages
+ */
+export const cleanupExpiredMessages = async () => {
+  try {
+    const now = new Date();
+    console.log('🧹 Starting cleanup of expired messages...');
+    
+    // Query for messages that have expired
+    const q = query(
+      collection(db, CHAT_COLLECTION),
+      where('expiresAt', '<=', now)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const deletedMessages = [];
+    
+    // Delete each expired message
+    for (const docSnapshot of querySnapshot.docs) {
+      try {
+        await deleteDoc(docSnapshot.ref);
+        deletedMessages.push({
+          id: docSnapshot.id,
+          userId: docSnapshot.data().userId,
+          message: docSnapshot.data().message.substring(0, 50) + '...'
+        });
+        console.log(`🗑️ Deleted expired message: ${docSnapshot.id}`);
+      } catch (deleteError) {
+        console.error(`❌ Error deleting message ${docSnapshot.id}:`, deleteError);
+      }
+    }
+    
+    console.log(`✅ Cleanup completed. Deleted ${deletedMessages.length} expired messages.`);
+    
+    return {
+      success: true,
+      deletedCount: deletedMessages.length,
+      deletedMessages: deletedMessages
+    };
+    
+  } catch (error) {
+    console.error('❌ Error during cleanup:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Start automatic cleanup interval
+ * This will run cleanup every 30 minutes
+ */
+export const startAutoCleanup = () => {
+  console.log('🕒 Starting automatic cleanup interval (every 30 minutes)...');
+  
+  // Run cleanup immediately
+  cleanupExpiredMessages();
+  
+  // Set up interval to run every 30 minutes
+  const cleanupInterval = setInterval(() => {
+    cleanupExpiredMessages();
+  }, 30 * 60 * 1000); // 30 minutes in milliseconds
+  
+  // Return the interval ID so it can be cleared if needed
+  return cleanupInterval;
+};
+
+/**
+ * Stop automatic cleanup
+ */
+export const stopAutoCleanup = (intervalId) => {
+  if (intervalId) {
+    clearInterval(intervalId);
+    console.log('🛑 Automatic cleanup stopped.');
+  }
+};
+
+/**
+ * Manual cleanup function for testing
+ * This will delete all messages older than the specified hours
+ */
+export const manualCleanup = async (hoursOld = 2) => {
+  try {
+    const cutoffTime = new Date(Date.now() - (hoursOld * 60 * 60 * 1000));
+    console.log(`🧹 Manual cleanup: Deleting messages older than ${hoursOld} hours...`);
+    
+    const q = query(
+      collection(db, CHAT_COLLECTION),
+      where('timestamp', '<', cutoffTime)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const deletedMessages = [];
+    
+    for (const docSnapshot of querySnapshot.docs) {
+      try {
+        await deleteDoc(docSnapshot.ref);
+        deletedMessages.push({
+          id: docSnapshot.id,
+          userId: docSnapshot.data().userId,
+          createdAt: docSnapshot.data().createdAt
+        });
+        console.log(`🗑️ Deleted old message: ${docSnapshot.id}`);
+      } catch (deleteError) {
+        console.error(`❌ Error deleting message ${docSnapshot.id}:`, deleteError);
+      }
+    }
+    
+    console.log(`✅ Manual cleanup completed. Deleted ${deletedMessages.length} old messages.`);
+    
+    return {
+      success: true,
+      deletedCount: deletedMessages.length,
+      cutoffTime: cutoffTime.toISOString()
+    };
+    
+  } catch (error) {
+    console.error('❌ Error during manual cleanup:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 };
 

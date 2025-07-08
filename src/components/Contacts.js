@@ -7,6 +7,7 @@ import {
   updateSocialBubbles, 
   subscribeToContactsData 
 } from '../firebase/firestoreService';
+import ChatBox from './ChatBox';
 
 const Contacts = () => {
   const navigate = useNavigate();
@@ -611,64 +612,10 @@ const Contacts = () => {
         return (
           <div className={`contact-section chatbox-section ${isFullScreenChatbox ? 'fullscreen' : ''}`}>
             <img src="/pic7.png" alt="Interactive Chatbox" className="section-header-image" />
-            <div className="chatbox-container">
-              <div className="chatbox-header">
-                <div className="chatbox-status">
-                  <div className="status-indicator offline"></div>
-                  <span>Currently Offline</span>
-                </div>
-                <div className="chatbox-info">
-                  <span>Will try to respond as soon as possible :)</span>
-                </div>
-                <div className="chatbox-controls">
-                  <button 
-                    className="fullscreen-btn"
-                    onClick={() => setIsFullScreenChatbox(!isFullScreenChatbox)}
-                    title={isFullScreenChatbox ? 'Exit Full Screen' : 'Enter Full Screen'}
-                    >
-
-                    {isFullScreenChatbox ? (
-                      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none">
-                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
-                      </svg>
-                    ) : (
-                      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none">
-                        <path d="M3 7V4a1 1 0 0 1 1-1h3m0 18H4a1 1 0 0 1-1-1v-3m18 0v3a1 1 0 0 1-1 1h-3m0-18h3a1 1 0 0 1 1 1v3"></path>
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="chatbox-messages">
-                <div className="message system-message">
-                  <div className="message-content">
-                    <p>👋 Welcome to my contact chatbox!</p>
-                    <p>This feature is currently under development. For now, you can reach me through the social links or contact form.</p>
-                  </div>
-                  <div className="message-timestamp">
-                    {new Date().toLocaleTimeString()}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="chatbox-input-area">
-                <div className="input-wrapper">
-                  <input 
-                    type="text" 
-                    placeholder="Type your message here..." 
-                    disabled
-                    className="chatbox-input"
-                  />
-                  <button className="send-btn" disabled>
-                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none">
-                      <line x1="22" y1="2" x2="11" y2="13"></line>
-                      <polygon points="22,2 15,22 11,13 2,9"></polygon>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ChatBox 
+              isFullScreen={isFullScreenChatbox}
+              onToggleFullScreen={() => setIsFullScreenChatbox(!isFullScreenChatbox)}
+            />
           </div>
         );
       case 'links':
