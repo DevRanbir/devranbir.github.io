@@ -833,12 +833,17 @@
 .homepage-description {
   border-radius: 15px;
   padding: 25px;
-  margin-top: 30px;
+  margin-top: -30px;
   margin-bottom: -60px;
+  color: rgba(255, 255, 255, 0.37);
+}
+
+.homepage-description:hover {
+  color: rgb(255, 255, 255);
 }
 
 .homepage-description p {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.37);
   font-size: 1.1rem;
   margin-bottom: 20px;
   text-align: center;
@@ -1322,7 +1327,8 @@ body:has(.chatbox-section.fullscreen) .command-line-container {
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid #be00ff;
+  box-shadow: 0 0 20px rgba(190, 0, 255, 0.3);
   backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
@@ -1362,6 +1368,11 @@ body:has(.chatbox-section.fullscreen) .command-line-container {
 .social-bubble.edit-mode:hover {
   transform: translateX(-50%) translateY(-50%) scale(1.15);
   box-shadow: 0 0 40px rgba(190, 0, 255, 0.8) !important;
+}
+
+.social-bubble:hover {
+  transform: translateX(-50%) translateY(-50%) scale(1.15);
+  box-shadow: 0 0 5px rgba(190, 0, 255, 0.8) !important;
 }
 
 .bubble-link {

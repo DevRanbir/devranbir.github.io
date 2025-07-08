@@ -5,13 +5,11 @@ import {
   generateAnonymousUserId,
   testCompleteMessageFlow,
   startAutoCleanup,
-  cleanupExpiredMessages,
-  manualCleanup
+  cleanupExpiredMessages
 } from '../firebase/firestoreService';
-import { sendTestTelegramResponse } from '../services/webhookHandler';
 import '../utils/cleanupTests'; // Import cleanup tests for console access
 
-const ChatBox = ({ isFullScreen, onToggleFullScreen }) => {
+const ChatBox = ({ isFullScreen, onToggleFullScreen, editMode }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [userId, setUserId] = useState('');
@@ -282,39 +280,43 @@ const ChatBox = ({ isFullScreen, onToggleFullScreen }) => {
               <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
             </svg>
           </button>
-          <button 
-            className="test-btn"
-            onClick={handleTestResponse}
-            title="Send Test Response"
-            style={{ 
-              background: 'rgba(0, 255, 0, 0.1)', 
-              border: '1px solid rgba(0, 255, 0, 0.3)',
-              color: 'white',
-              padding: '8px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }}
-          >
-            Test
-          </button>
-          <button 
-            className="cleanup-btn"
-            onClick={handleCleanupTest}
-            title="Manual Cleanup Test"
-            style={{ 
-              background: 'rgba(255, 165, 0, 0.1)', 
-              border: '1px solid rgba(255, 165, 0, 0.3)',
-              color: 'white',
-              padding: '8px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              marginLeft: '4px'
-            }}
-          >
-            🧹
-          </button>
+          {editMode && (
+            <>
+              <button 
+                className="test-btn"
+                onClick={handleTestResponse}
+                title="Send Test Response"
+                style={{ 
+                  background: 'rgba(0, 255, 0, 0.1)', 
+                  border: '1px solid rgba(0, 255, 0, 0.3)',
+                  color: 'white',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                Test
+              </button>
+              <button 
+                className="cleanup-btn"
+                onClick={handleCleanupTest}
+                title="Manual Cleanup Test"
+                style={{ 
+                  background: 'rgba(255, 165, 0, 0.1)', 
+                  border: '1px solid rgba(255, 165, 0, 0.3)',
+                  color: 'white',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  marginLeft: '4px'
+                }}
+              >
+                🧹
+              </button>
+            </>
+          )}
           <button 
             className="fullscreen-btn"
             onClick={onToggleFullScreen}

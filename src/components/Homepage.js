@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import { 
-  getHomepageData, 
   updateSocialLinks, 
   updateAuthorDescription, 
   updateAuthorSkills,
@@ -36,8 +35,6 @@ const Homepage = () => {
   const [commandMessage, setCommandMessage] = useState('');
   const [showCommandMessage, setShowCommandMessage] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   // Firestore subscription unsubscribe function
   const [unsubscribe, setUnsubscribe] = useState(null);
@@ -355,9 +352,6 @@ const Homepage = () => {
   // Save updated data to Firestore
   const saveDataToFirestore = async (key, data) => {
     try {
-      setLoading(true);
-      setError('');
-      
       switch (key) {
         case 'socialLinks':
           await updateSocialLinks(data);
@@ -375,10 +369,7 @@ const Homepage = () => {
       showMessage(`${key} updated successfully!`);
     } catch (err) {
       console.error(`Error updating ${key}:`, err);
-      setError(`Failed to update ${key}: ${err.message}`);
       showMessage(`Error: Failed to update ${key}`);
-    } finally {
-      setLoading(false);
     }
   };
   
@@ -599,9 +590,6 @@ const Homepage = () => {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        setLoading(true);
-        setError('');
-        
         // Initialize Firestore data if it doesn't exist
         await initializeHomepageData();
         
@@ -627,8 +615,6 @@ const Homepage = () => {
           if (data.authorSkills) {
             setAuthorSkills(data.authorSkills);
           }
-          
-          setLoading(false);
         });
         
         // Store the unsubscribe function
@@ -636,8 +622,6 @@ const Homepage = () => {
         
       } catch (err) {
         console.error('Error initializing homepage data:', err);
-        setError(`Failed to load homepage data: ${err.message}`);
-        setLoading(false);
       }
     };
     
@@ -649,7 +633,8 @@ const Homepage = () => {
         unsubscribe();
       }
     };
-  }, []); // Empty dependency array to run only once
+    // eslint-disable-next-line
+  }, []); // Empty dependency array is intentional - we only want this to run once
 
   // Handle "/" key press to focus command line
   useEffect(() => {

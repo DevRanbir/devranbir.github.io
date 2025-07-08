@@ -615,6 +615,7 @@ const Contacts = () => {
             <ChatBox 
               isFullScreen={isFullScreenChatbox}
               onToggleFullScreen={() => setIsFullScreenChatbox(!isFullScreenChatbox)}
+              editMode={editMode}
             />
           </div>
         );
