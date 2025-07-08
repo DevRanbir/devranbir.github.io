@@ -5,9 +5,9 @@ import { sendTelegramResponse } from '../firebase/firestoreService';
 
 // Configuration (Replace with your actual bot token and chat ID)
 const TELEGRAM_CONFIG = {
-  botToken: process.env.REACT_APP_TELEGRAM_BOT_TOKEN || '8118284542:AAG-XJMrd1EelpOY8g2eKGOhitzmHfjWwmo',
-  chatId: process.env.REACT_APP_TELEGRAM_CHAT_ID || '5135890857',
-  webhookUrl: process.env.REACT_APP_TELEGRAM_WEBHOOK_URL || 'https://telegram-webhook-server-production.up.railway.app/api/webhook/telegram'
+  botToken: process.env.REACT_APP_TELEGRAM_BOT_TOKEN ,
+  chatId: process.env.REACT_APP_TELEGRAM_CHAT_ID,
+  webhookUrl: process.env.REACT_APP_TELEGRAM_WEBHOOK_URL
 };
 
 /**
