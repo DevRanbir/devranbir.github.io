@@ -609,6 +609,7 @@ const About = () => {
       unsubscribe();
       window.removeEventListener('aboutDataUpdated', handleAboutDataUpdate);
     };
+    // eslint-disable-next-line
   }, []);
   
   // Save social links to localStorage whenever they change
@@ -618,6 +619,7 @@ const About = () => {
   // Fetch README content when component mounts or aboutData changes
   useEffect(() => {
     fetchReadme();
+    // eslint-disable-next-line
   }, [aboutData.githubReadmeUrl]);
   
   // Function to get default icon based on social media name

@@ -5,7 +5,6 @@ import './ProjectsStyles.css';
 import { 
   getProjectsData, 
   updateProjects, 
-  subscribeToProjectsData 
 } from '../firebase/firestoreService';
 
 const Projects = () => {
@@ -899,13 +898,6 @@ const Projects = () => {
 
     loadProjectsFromFirestore();
 
-    // Set up real-time listener for Firestore updates
-    const unsubscribeProjects = subscribeToProjectsData((data) => {
-      if (data.projects) {
-        setProjects(data.projects);
-      }
-    });
-
     // Listen for updates from Controller
     const handleProjectsUpdate = (event) => {
       const { projects: updatedProjects } = event.detail;
@@ -914,11 +906,6 @@ const Projects = () => {
 
     window.addEventListener('projectsDataUpdated', handleProjectsUpdate);
 
-    // Cleanup listeners on unmount
-    return () => {
-      unsubscribeProjects();
-      window.removeEventListener('projectsDataUpdated', handleProjectsUpdate);
-    };
     
     // Load the latest Spline viewer script with enhanced error handling
     const script = document.createElement('script');
