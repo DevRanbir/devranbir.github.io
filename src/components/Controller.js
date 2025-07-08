@@ -1089,7 +1089,7 @@ const Controller = () => {
         return (
           <div className="section-content home-management">
             <div className="home-header">
-              <h2>Homepage Management</h2>
+              <img src="/pic11.png" alt="Home Management" className="section-header-image2" />
               <p>Manage all homepage content from here</p>
               {loading && <div className="loading-indicator">🔄 Syncing with Firestore...</div>}
               {error && <div className="error-indicator">❌ {error}</div>}
@@ -1268,7 +1268,7 @@ const Controller = () => {
         return (
           <div className="section-content doc-management">
             <div className="doc-header">
-              <h2>Documents Management</h2>
+              <img src="/pic12.png" alt="Documents Management" className="section-header-image2" />
               <p>Manage all documents from here - add, edit, or remove documents.</p>
               {loading && <div className="loading-indicator">🔄 Syncing with Firestore...</div>}
               {error && <div className="error-indicator">❌ {error}</div>}
@@ -1440,7 +1440,7 @@ const Controller = () => {
         return (
           <div className="section-content project-management">
             <div className="project-header">
-              <h2>Projects Management</h2>
+              <img src="/pic13.png" alt="Projects Management" className="section-header-image2" />
               <p>Manage all projects from here - add, edit, or remove projects.</p>
               {loading && <div className="loading-indicator">🔄 Syncing with Firestore...</div>}
               {error && <div className="error-indicator">❌ {error}</div>}
@@ -1578,45 +1578,45 @@ const Controller = () => {
             )}
             
             {/* Projects Display */}
-            <div className="project-display-section">
+            <div className="projects-showcase-container">
               <h3>💼 Current Projects</h3>
               {getProjectsByFilter().length === 0 ? (
-                <div className="no-projects-message">
+                <div className="empty-projects-notice">
                   {selectedProjectFilter === 'all' 
                     ? 'No projects found. Add your first project!'
                     : `No ${selectedProjectFilter} projects found.`}
                 </div>
               ) : (
-                <div className={`project-display ${projectViewMode === 'list' ? 'list-view' : 'block-view'}`}>
+                <div className={`projects-grid-wrapper ${projectViewMode === 'list' ? 'linear-layout' : 'card-layout'}`}>
                   {getProjectsByFilter().map(project => (
-                    <div key={project.id} className="project-item">
-                      <div className="project-item-content">
-                        <div className="project-icon">
+                    <div key={project.id} className="project-card">
+                      <div className="project-card-body">
+                        <div className="project-type-icon">
                           {getProjectTypeIcon(project.type)}
                         </div>
-                        <div className="project-details">
-                          <h4 className="project-name">{project.name}</h4>
-                          <p className="project-type">{allowedProjectTypes.find(t => t.value === project.type)?.label}</p>
-                          {project.description && <p className="project-description">{project.description}</p>}
-                          <p className="project-date">Added: {project.dateAdded}</p>
-                          <div className="project-links">
+                        <div className="project-info">
+                          <h4 className="project-title">{project.name}</h4>
+                          <p className="project-category">{allowedProjectTypes.find(t => t.value === project.type)?.label}</p>
+                          {project.description && <p className="project-summary">{project.description}</p>}
+                          <p className="project-timestamp">Added: {project.dateAdded}</p>
+                          <div className="project-external-links">
                             {project.repoUrl && (
-                              <a href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="project-link repo-link">
+                              <a href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="external-link repository-link">
                                 📁 Repository
                               </a>
                             )}
                             {project.liveUrl && (
-                              <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="project-link live-link">
+                              <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="external-link demo-link">
                                 🌐 Live Demo
                               </a>
                             )}
                           </div>
                         </div>
-                        <div className="project-actions">
-                          <button onClick={() => handleEditProject(project)} className="project-edit-btn">
+                        <div className="project-control-buttons">
+                          <button onClick={() => handleEditProject(project)} className="control-btn edit-control">
                             ✏️ Edit
                           </button>
-                          <button onClick={() => handleDeleteProject(project.id)} className="project-delete-btn">
+                          <button onClick={() => handleDeleteProject(project.id)} className="control-btn delete-control">
                             🗑️ Delete
                           </button>
                         </div>
@@ -1626,13 +1626,15 @@ const Controller = () => {
                 </div>
               )}
             </div>
+
+
           </div>
         );
       case 'about':
         return (
-          <div className="about-section-content">
+          <div className="section-content about-management">
             <div className="about-mgmt-header">
-              <h2>About Page Management</h2>
+              <img src="/pic14.png" alt="About Management" className="section-header-image2" />
               <p>Manage the GitHub repository settings for the About page README display.</p>
               {loading && <div className="loading-indicator">🔄 Syncing with Firestore...</div>}
               {error && <div className="error-indicator">❌ {error}</div>}
@@ -1642,46 +1644,45 @@ const Controller = () => {
             <div className="about-mgmt-section">
               <h3>📖 GitHub Repository Settings</h3>
               <div className="github-repo-manager">
-                {editingAboutData ? (
-                  <div className="about-edit-form">
-                    <div className="about-form-group">
-                      <label>GitHub Username:</label>
-                      <input
-                        type="text"
-                        value={aboutFormData.githubUsername}
-                        onChange={(e) => setAboutFormData({...aboutFormData, githubUsername: e.target.value})}
-                        className="about-edit-input"
-                        placeholder="Enter GitHub username"
-                      />
-                    </div>
-                    
-                    <div className="about-form-group">
-                      <label>Repository Name:</label>
-                      <input
-                        type="text"
-                        value={aboutFormData.repositoryName}
-                        onChange={(e) => setAboutFormData({...aboutFormData, repositoryName: e.target.value})}
-                        className="about-edit-input"
-                        placeholder="Enter repository name"
-                      />
-                    </div>
-                    
-                    {generateReadmeUrl() && (
+                {editingAboutData ? (                    <div className="about-edit-form">
                       <div className="about-form-group">
-                        <label>Generated README URL:</label>
-                        <div className="about-url-preview">
-                          <code>{generateReadmeUrl()}</code>
-                        </div>
+                        <label>GitHub Username:</label>
+                        <input
+                          type="text"
+                          value={aboutFormData.githubUsername}
+                          onChange={(e) => setAboutFormData({...aboutFormData, githubUsername: e.target.value})}
+                          className="about-edit-input"
+                          placeholder="Enter GitHub username"
+                        />
                       </div>
-                    )}
-                    
-                    <div className="about-edit-actions">
-                      <button onClick={handleSaveAboutData} className="about-save-btn">Save Changes</button>
-                      <button onClick={() => setEditingAboutData(null)} className="about-cancel-btn">Cancel</button>
+                      
+                      <div className="about-form-group">
+                        <label>Repository Name:</label>
+                        <input
+                          type="text"
+                          value={aboutFormData.repositoryName}
+                          onChange={(e) => setAboutFormData({...aboutFormData, repositoryName: e.target.value})}
+                          className="about-edit-input"
+                          placeholder="Enter repository name"
+                        />
+                      </div>
+                      
+                      {generateReadmeUrl() && (
+                        <div className="about-form-group">
+                          <label>Generated README URL:</label>
+                          <div className="url-preview">
+                            <code>{generateReadmeUrl()}</code>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="about-actions">
+                        <button onClick={handleSaveAboutData} className="save-btn">Save Changes</button>
+                        <button onClick={() => setEditingAboutData(null)} className="cancel-btn">Cancel</button>
+                      </div>
                     </div>
-                  </div>
                 ) : (
-                  <div className="about-display-content">
+                  <div className="display-content">
                     <div className="about-current-settings">
                       <h4>Current Settings:</h4>
                       <div className="about-setting-item">
@@ -1694,14 +1695,14 @@ const Controller = () => {
                       </div>
                       <div className="about-setting-item">
                         <strong>README URL:</strong> 
-                        <span className="about-setting-value about-url-text">
+                        <span className="about-setting-value">
                           {aboutData.githubReadmeUrl || 'Not configured'}
                         </span>
                       </div>
                     </div>
                     
                     <div className="about-actions">
-                      <button onClick={handleEditAboutData} className="about-edit-btn">
+                      <button onClick={handleEditAboutData} className="edit-btn">
                         ✏️ Edit Repository Settings
                       </button>
                       {aboutData.githubReadmeUrl && (
@@ -1719,49 +1720,25 @@ const Controller = () => {
                 )}
               </div>
             </div>
-            
-            {/* README Preview Information */}
-            <div className="about-mgmt-section">
-              <h3>📄 README Information</h3>
-              <div className="about-readme-info">
-                <p>The About page displays the README content from the specified GitHub repository.</p>
-                <ul className="about-readme-features">
-                  <li>✅ Automatically fetches README from GitHub API</li>
-                  <li>✅ Displays HTML-formatted content</li>
-                  <li>✅ Supports images, code blocks, and links</li>
-                  <li>✅ Auto-refreshes when repository settings change</li>
-                </ul>
-                
-                {aboutData.githubReadmeUrl ? (
-                  <div className="about-readme-status">
-                    <span className="about-status-indicator about-status-active">✅ Active</span>
-                    <span className="about-status-text">
-                      README will be loaded from: {aboutData.githubUsername}/{aboutData.repositoryName}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="about-readme-status">
-                    <span className="about-status-indicator about-status-inactive">❌ Inactive</span>
-                    <span className="about-status-text">
-                      Configure GitHub repository settings to display README
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+
           </div>
         );
       case 'contacts':
         return (
-          <div className="section-content">
-            <h2>Contacts Management</h2>
+          <div className="section-content contacts-management">
+            <div className="contacts-header">
+              <img src="/pic15.png" alt="Contacts Management" className="section-header-image2" />
+              <p>Manage all contact information and social media settings.</p>
+              {loading && <div className="loading-indicator">🔄 Syncing with Firestore...</div>}
+              {error && <div className="error-indicator">❌ {error}</div>}
+            </div>
             
             {/* Contacts Description Management */}
-            <div className="management-section">
-              <h3>Description Text Management</h3>
-              <div className="management-controls">
+            <div className="management-controls">
+              <h3>📝 Description Management</h3>
+              <div className="contacts-description-manager">
                 {!contactsDescriptionManager.isEditing ? (
-                  <div>
+                  <div className="display-content">
                     <div className="current-data">
                       <strong>Current Description:</strong>
                       <p className="data-preview">{contactsData.description || 'No description set'}</p>
@@ -1770,7 +1747,7 @@ const Controller = () => {
                       className="btn-primary"
                       onClick={contactsDescriptionManagementComponent.startEditing}
                     >
-                      Edit Description
+                      ✏️ Edit Description
                     </button>
                   </div>
                 ) : (
@@ -1780,6 +1757,7 @@ const Controller = () => {
                       <textarea
                         value={contactsDescriptionManager.tempDescription}
                         onChange={(e) => contactsDescriptionManagementComponent.updateTempDescription(e.target.value)}
+                        className="edit-textarea"
                         rows="4"
                         placeholder="Enter description text..."
                       />
@@ -1805,26 +1783,33 @@ const Controller = () => {
             </div>
 
             {/* Social Bubbles Management */}
-            <div className="management-section">
-              <h3>Social Media Bubbles Management</h3>
-              <div className="management-controls">
+            <div className="management-controls">
+              <h3>💬 Social Bubbles Management</h3>
+              <div className="social-bubbles-manager">
                 {!socialBubblesManager.isEditing ? (
-                  <div>
+                  <div className="display-content">
                     <div className="current-data">
                       <strong>Current Social Bubbles:</strong>
                       <div className="bubbles-preview">
                         {contactsData.socialBubbles?.map(bubble => (
                           <div key={bubble.id} className="bubble-item">
-                            <span>{bubble.id}</span> - <span>{bubble.url}</span>
+                            <div className="bubble-info">
+                              <span className="bubble-name">{bubble.id}</span>
+                              <span className="bubble-url">{bubble.url}</span>
+                            </div>
+                            <div className="bubble-meta">
+                              <span className="bubble-size">Size: {bubble.size}</span>
+                              <span className="bubble-color" style={{backgroundColor: bubble.color}}></span>
+                            </div>
                           </div>
-                        )) || 'No social bubbles set'}
+                        )) || <span className="no-data">No social bubbles set</span>}
                       </div>
                     </div>
                     <button 
                       className="btn-primary"
                       onClick={socialBubblesManagementComponent.startEditing}
                     >
-                      Manage Social Bubbles
+                      ✏️ Manage Social Bubbles
                     </button>
                   </div>
                 ) : (
@@ -1832,13 +1817,14 @@ const Controller = () => {
                     <div className="bubbles-list">
                       {socialBubblesManager.tempBubbles.map(bubble => (
                         <div key={bubble.id} className="bubble-edit-item">
-                          <div className="form-row">
+                          <div className="bubble-edit-form">
                             <div className="form-group">
                               <label>ID:</label>
                               <input
                                 type="text"
                                 value={bubble.id}
                                 onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'id', e.target.value)}
+                                className="edit-input"
                               />
                             </div>
                             <div className="form-group">
@@ -1847,6 +1833,7 @@ const Controller = () => {
                                 type="text"
                                 value={bubble.url}
                                 onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'url', e.target.value)}
+                                className="edit-input"
                               />
                             </div>
                             <div className="form-group">
@@ -1855,6 +1842,7 @@ const Controller = () => {
                                 type="number"
                                 value={bubble.size}
                                 onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'size', parseInt(e.target.value))}
+                                className="edit-input"
                               />
                             </div>
                             <div className="form-group">
@@ -1863,13 +1851,14 @@ const Controller = () => {
                                 type="color"
                                 value={bubble.color}
                                 onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'color', e.target.value)}
+                                className="edit-input"
                               />
                             </div>
                             <button 
                               className="btn-danger"
                               onClick={() => socialBubblesManagementComponent.deleteBubble(bubble.id)}
                             >
-                              Delete
+                              🗑️ Delete
                             </button>
                           </div>
                         </div>
@@ -1879,13 +1868,14 @@ const Controller = () => {
                     {socialBubblesManager.isAddingNew && (
                       <div className="new-bubble-form">
                         <h4>Add New Bubble</h4>
-                        <div className="form-row">
+                        <div className="bubble-form-row">
                           <div className="form-group">
                             <label>ID:</label>
                             <input
                               type="text"
                               value={socialBubblesManager.newBubbleData.id}
                               onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('id', e.target.value)}
+                              className="edit-input"
                             />
                           </div>
                           <div className="form-group">
@@ -1894,6 +1884,7 @@ const Controller = () => {
                               type="text"
                               value={socialBubblesManager.newBubbleData.url}
                               onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('url', e.target.value)}
+                              className="edit-input"
                             />
                           </div>
                           <div className="form-group">
@@ -1902,6 +1893,7 @@ const Controller = () => {
                               type="number"
                               value={socialBubblesManager.newBubbleData.size}
                               onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('size', parseInt(e.target.value))}
+                              className="edit-input"
                             />
                           </div>
                           <div className="form-group">
@@ -1910,13 +1902,14 @@ const Controller = () => {
                               type="color"
                               value={socialBubblesManager.newBubbleData.color}
                               onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('color', e.target.value)}
+                              className="edit-input"
                             />
                           </div>
                           <button 
                             className="btn-success"
                             onClick={socialBubblesManagementComponent.addNewBubble}
                           >
-                            Add Bubble
+                            ✓ Add Bubble
                           </button>
                         </div>
                       </div>
@@ -1924,10 +1917,10 @@ const Controller = () => {
                     
                     <div className="form-actions">
                       <button 
-                        className="btn-secondary"
+                        className="btn-primary"
                         onClick={socialBubblesManagementComponent.startAddingNew}
                       >
-                        Add New Bubble
+                        + Add New Bubble
                       </button>
                       <button 
                         className="btn-success"
@@ -1949,24 +1942,30 @@ const Controller = () => {
             </div>
 
             {/* Location Details Management */}
-            <div className="management-section">
-              <h3>Location Details Management</h3>
-              <div className="management-controls">
+            <div className="management-controls">
+              <h3>📍 Location Management</h3>
+              <div className="location-details-manager">
                 {!locationDetailsManager.isEditing ? (
-                  <div>
+                  <div className="display-content">
                     <div className="current-data">
                       <strong>Current Location Details:</strong>
                       <div className="location-preview">
-                        <p><strong>Location:</strong> {contactsData.locationDetails?.location || 'Not set'}</p>
-                        <p><strong>Response Time:</strong> {contactsData.locationDetails?.responseTime || 'Not set'}</p>
-                        <p><strong>Status:</strong> {contactsData.locationDetails?.status || 'Not set'}</p>
+                        <div className="location-item">
+                          <strong>Location:</strong> <span>{contactsData.locationDetails?.location || 'Not set'}</span>
+                        </div>
+                        <div className="location-item">
+                          <strong>Response Time:</strong> <span>{contactsData.locationDetails?.responseTime || 'Not set'}</span>
+                        </div>
+                        <div className="location-item">
+                          <strong>Status:</strong> <span>{contactsData.locationDetails?.status || 'Not set'}</span>
+                        </div>
                       </div>
                     </div>
                     <button 
                       className="btn-primary"
                       onClick={locationDetailsManagementComponent.startEditing}
                     >
-                      Edit Location Details
+                      ✏️ Edit Location Details
                     </button>
                   </div>
                 ) : (
@@ -1977,6 +1976,7 @@ const Controller = () => {
                         type="text"
                         value={locationDetailsManager.tempLocationData.location}
                         onChange={(e) => locationDetailsManagementComponent.updateTempLocationField('location', e.target.value)}
+                        className="edit-input"
                         placeholder="e.g., New York, NY, USA"
                       />
                     </div>
@@ -1986,6 +1986,7 @@ const Controller = () => {
                         type="text"
                         value={locationDetailsManager.tempLocationData.responseTime}
                         onChange={(e) => locationDetailsManagementComponent.updateTempLocationField('responseTime', e.target.value)}
+                        className="edit-input"
                         placeholder="e.g., within 24 hours"
                       />
                     </div>
@@ -1994,6 +1995,7 @@ const Controller = () => {
                       <select
                         value={locationDetailsManager.tempLocationData.status}
                         onChange={(e) => locationDetailsManagementComponent.updateTempLocationField('status', e.target.value)}
+                        className="edit-input"
                       >
                         <option value="">Select status...</option>
                         <option value="Available">Available</option>
@@ -2026,7 +2028,7 @@ const Controller = () => {
       default:
         return (
           <div className="section-content">
-            <h2>Homepage</h2>
+            <img src="/pic3.png" alt="Homepage" className="section-header-image2" />
             <p>Welcome to the Controller Homepage section</p>
           </div>
         );
