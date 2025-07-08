@@ -53,7 +53,7 @@
   display: block;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
-  margin-bottom: -20px;
+  margin-bottom: 20px;
 }
 
 .section-header-image:hover {
@@ -210,7 +210,6 @@
 
 .chatbox-header {
   background: #000;
-  border-top: 2px solid rgba(255, 255, 255, 0.075);
   border-radius: 15px 15px 0 0;
   padding: 10px;
   display: flex;
@@ -220,6 +219,9 @@
   gap: 1rem;
 }
 
+.chatbox-section.fullscreen .chatbox-header {
+  border: 2px solid rgba(255, 255, 255, 0.18);
+}
 
 .chatbox-status {
   display: flex;
@@ -1302,4 +1304,136 @@ body:has(.chatbox-section.fullscreen) .command-line-container {
   .message-content {
     max-width: 90% !important;
   }
+}
+
+/* Social Links Section - Bubble Design */
+.social-bubbles-container {
+  position: relative;
+  width: 100%;
+  height: 350px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  margin: 30px 0;
+  overflow: hidden;
+}
+
+.social-bubble {
+  position: absolute;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-50%) translateY(-50%);
+  animation: float 6s ease-in-out infinite;
+}
+
+.social-bubble:nth-child(odd) {
+  animation-delay: -2s;
+}
+
+.social-bubble:nth-child(even) {
+  animation-delay: -4s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateX(-50%) translateY(-50%) translateY(0px);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-50%) translateY(-10px);
+  }
+}
+
+.social-bubble:hover {
+  transform: translateX(-50%) translateY(-50%) scale(1.1);
+  filter: brightness(1.2);
+  z-index: 10;
+}
+
+.social-bubble.edit-mode {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 30px rgba(190, 0, 255, 0.6) !important;
+}
+
+.social-bubble.edit-mode:hover {
+  transform: translateX(-50%) translateY(-50%) scale(1.15);
+  box-shadow: 0 0 40px rgba(190, 0, 255, 0.8) !important;
+}
+
+.bubble-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.bubble-link:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.bubble-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.bubble-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+}
+
+.bubble-name {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  opacity: 0.8;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bubble-controls {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(190, 0, 255, 0.3);
+  white-space: nowrap;
+}
+
+.social-bubble.edit-mode .bubble-controls {
+  display: flex;
+}
+
+.bubble-size {
+  font-weight: 600;
+  color: #be00ff;
+}
+
+.bubble-position {
+  color: rgba(255, 255, 255, 0.5);
 }
