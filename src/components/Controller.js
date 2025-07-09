@@ -1926,6 +1926,24 @@ const Controller = () => {
                                 className="edit-input"
                               />
                             </div>
+                            <div className="form-group">
+                              <label>X Position:</label>
+                              <input
+                                type="number"
+                                value={bubble.x}
+                                onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'x', parseInt(e.target.value))}
+                                className="edit-input"
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>Y Position:</label>
+                              <input
+                                type="number"
+                                value={bubble.y}
+                                onChange={(e) => socialBubblesManagementComponent.updateTempBubble(bubble.id, 'y', parseInt(e.target.value))}
+                                className="edit-input"
+                              />
+                            </div>
                             <button 
                               className="btn-danger"
                               onClick={() => socialBubblesManagementComponent.deleteBubble(bubble.id)}
@@ -1974,6 +1992,24 @@ const Controller = () => {
                               type="color"
                               value={socialBubblesManager.newBubbleData.color}
                               onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('color', e.target.value)}
+                              className="edit-input"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>X Position:</label>
+                            <input
+                              type="number"
+                              value={socialBubblesManager.newBubbleData.x}
+                              onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('x', parseInt(e.target.value))}
+                              className="edit-input"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Y Position:</label>
+                            <input
+                              type="number"
+                              value={socialBubblesManager.newBubbleData.y}
+                              onChange={(e) => socialBubblesManagementComponent.updateNewBubbleData('y', parseInt(e.target.value))}
                               className="edit-input"
                             />
                           </div>

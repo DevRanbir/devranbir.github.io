@@ -1844,11 +1844,15 @@
   margin-bottom: 16px;
 }
 
+
+
 .bubble-edit-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(20px, 1fr));
   gap: 12px;
-  align-items: end;
+  align-items: stretch;
+  align-content: stretch;
+  justify-content: center;
 }
 
 .new-bubble-form {
