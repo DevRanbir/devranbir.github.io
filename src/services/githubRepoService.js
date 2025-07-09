@@ -1,4 +1,4 @@
-// GitHub Repository Service for fetching user repositories
+// GitHub Repository Service for fetching user repositories with pinned repos and enhanced sorting
 class GitHubRepoService {
   constructor() {
     this.baseURL = 'https://api.github.com';
@@ -19,13 +19,104 @@ class GitHubRepoService {
     return headers;
   }
 
+  // Fetch pinned repositories for a user
+  async getPinnedRepositories(username) {
+    try {
+      // GitHub GraphQL API is needed for pinned repositories
+      const query = `
+        query {
+          user(login: "${username}") {
+            pinnedItems(first: 6, types: [REPOSITORY]) {
+              edges {
+                node {
+                  ... on Repository {
+                    id
+                    name
+                    description
+                    url
+                    homepageUrl
+                    createdAt
+                    updatedAt
+                    stargazerCount
+                    forkCount
+                    primaryLanguage {
+                      name
+                    }
+                    repositoryTopics(first: 20) {
+                      edges {
+                        node {
+                          topic {
+                            name
+                          }
+                        }
+                      }
+                    }
+                    isPrivate
+                    isFork
+                    defaultBranchRef {
+                      name
+                    }
+                    diskUsage
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ query }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`GitHub GraphQL API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.errors) {
+        throw new Error(`GraphQL errors: ${data.errors.map(e => e.message).join(', ')}`);
+      }
+
+      // Convert GraphQL response to REST API format
+      return data.data.user.pinnedItems.edges.map(edge => {
+        const repo = edge.node;
+        return {
+          id: parseInt(repo.id.replace('MDEwOlJlcG9zaXRvcnk=', ''), 10) || Date.now(),
+          name: repo.name,
+          description: repo.description,
+          html_url: repo.url,
+          homepage: repo.homepageUrl,
+          created_at: repo.createdAt,
+          updated_at: repo.updatedAt,
+          stargazers_count: repo.stargazerCount,
+          forks_count: repo.forkCount,
+          language: repo.primaryLanguage?.name,
+          topics: repo.repositoryTopics.edges.map(edge => edge.node.topic.name),
+          private: repo.isPrivate,
+          fork: repo.isFork,
+          default_branch: repo.defaultBranchRef?.name || 'main',
+          size: repo.diskUsage || 0,
+          isPinned: true // Mark as pinned
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching pinned repositories:', error);
+      // Return empty array if pinned repos can't be fetched
+      return [];
+    }
+  }
+
   // Fetch user repositories
   async getUserRepositories(username, options = {}) {
     try {
       const {
         type = 'owner', // 'all', 'owner', 'member'
         sort = 'updated', // 'created', 'updated', 'pushed', 'full_name'
-        direction = 'desc', // 'asc', 'desc'
+        direction = 'asc', // 'asc', 'desc'
         per_page = 100, // max 100
         page = 1
       } = options;
@@ -113,6 +204,7 @@ class GitHubRepoService {
       description: repo.description || '',
       dateAdded: repo.created_at ? new Date(repo.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       isFromGitHub: true, // Flag to identify GitHub-sourced projects
+      isPinned: repo.isPinned || false, // Flag for pinned repositories
       githubData: {
         stars: repo.stargazers_count,
         forks: repo.forks_count,
@@ -122,7 +214,8 @@ class GitHubRepoService {
         size: repo.size,
         default_branch: repo.default_branch,
         is_private: repo.private,
-        is_fork: repo.fork
+        is_fork: repo.fork,
+        isPinned: repo.isPinned || false
       }
     };
   }
@@ -188,16 +281,110 @@ class GitHubRepoService {
     return 'web';
   }
 
-  // Fetch repositories and convert to project format
+  // Enhanced sorting function
+  sortRepositories(repos, sortBy = 'pinned', direction = 'desc') {
+    const sorted = [...repos].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortBy) {
+        case 'pinned':
+          // Always show pinned first, then sort by stars
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          if (a.isPinned && b.isPinned) {
+            aValue = a.githubData?.stars || 0;
+            bValue = b.githubData?.stars || 0;
+          } else {
+            aValue = a.githubData?.stars || 0;
+            bValue = b.githubData?.stars || 0;
+          }
+          break;
+
+        case 'stars':
+          aValue = a.githubData?.stars || 0;
+          bValue = b.githubData?.stars || 0;
+          break;
+
+        case 'forks':
+          aValue = a.githubData?.forks || 0;
+          bValue = b.githubData?.forks || 0;
+          break;
+
+        case 'updated':
+          aValue = new Date(a.githubData?.updated_at || a.dateAdded);
+          bValue = new Date(b.githubData?.updated_at || b.dateAdded);
+          break;
+
+        case 'created':
+          aValue = new Date(a.dateAdded);
+          bValue = new Date(b.dateAdded);
+          break;
+
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+
+        case 'size':
+          aValue = a.githubData?.size || 0;
+          bValue = b.githubData?.size || 0;
+          break;
+
+        case 'language':
+          aValue = a.githubData?.language || 'zzz'; // Put repos without language at end
+          bValue = b.githubData?.language || 'zzz';
+          break;
+
+        case 'type':
+          aValue = a.type;
+          bValue = b.type;
+          break;
+
+        default:
+          return 0;
+      }
+
+      // Handle different value types
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      }
+
+      if (aValue instanceof Date && bValue instanceof Date) {
+        return direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      // Numeric comparison
+      return direction === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+
+    return sorted;
+  }
+
+  // Fetch repositories and convert to project format with enhanced sorting
   async getRepositoriesAsProjects(username = null, options = {}) {
     try {
       let repos;
+      let pinnedRepos = [];
       
+      // Get pinned repos if username is provided
       if (username) {
+        pinnedRepos = await this.getPinnedRepositories(username);
         repos = await this.getUserRepositories(username, options);
       } else {
         repos = await this.getMyRepositories(options);
       }
+      
+      // Mark pinned repositories
+      const pinnedRepoNames = new Set(pinnedRepos.map(repo => repo.name));
+      repos = repos.map(repo => ({
+        ...repo,
+        isPinned: pinnedRepoNames.has(repo.name)
+      }));
+
+      // Add pinned repos that might not be in the regular repos list
+      const repoNames = new Set(repos.map(repo => repo.name));
+      const additionalPinnedRepos = pinnedRepos.filter(repo => !repoNames.has(repo.name));
+      repos = [...repos, ...additionalPinnedRepos];
       
       // Filter options
       const {
@@ -205,7 +392,9 @@ class GitHubRepoService {
         excludePrivate = false,
         minStars = 0,
         excludeTopics = [],
-        includeTopics = []
+        includeTopics = [],
+        sortBy = 'pinned', // New sorting option
+        sortDirection = 'desc'
       } = options;
       
       let filteredRepos = repos;
@@ -237,11 +426,30 @@ class GitHubRepoService {
       }
       
       // Convert to project format
-      return filteredRepos.map(repo => this.convertRepoToProject(repo));
+      const projects = filteredRepos.map(repo => this.convertRepoToProject(repo));
+      
+      // Apply sorting
+      return this.sortRepositories(projects, sortBy, sortDirection);
+      
     } catch (error) {
       console.error('Error fetching repositories as projects:', error);
       throw error;
     }
+  }
+
+  // Get available sorting options
+  getSortingOptions() {
+    return [
+      { value: 'pinned', label: 'Pinned First' },
+      { value: 'stars', label: 'Stars' },
+      { value: 'forks', label: 'Forks' },
+      { value: 'updated', label: 'Recently Updated' },
+      { value: 'created', label: 'Recently Created' },
+      { value: 'name', label: 'Name' },
+      { value: 'size', label: 'Size' },
+      { value: 'language', label: 'Language' },
+      { value: 'type', label: 'Project Type' }
+    ];
   }
 
   // Check if token is configured
@@ -266,6 +474,17 @@ class GitHubRepoService {
       console.error('Error fetching rate limit:', error);
       throw error;
     }
+  }
+
+  // Utility method to get repositories with custom sorting
+  async getRepositoriesWithCustomSort(username = null, sortBy = 'pinned', sortDirection = 'desc', filterOptions = {}) {
+    const options = {
+      ...filterOptions,
+      sortBy,
+      sortDirection
+    };
+
+    return await this.getRepositoriesAsProjects(username, options);
   }
 }
 

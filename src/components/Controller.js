@@ -78,6 +78,7 @@ const Controller = () => {
   });
   const [selectedProjectFilter, setSelectedProjectFilter] = useState('all');
   const [projectViewMode, setProjectViewMode] = useState('blocks'); // 'blocks' or 'list'
+  const [draggedProject, setDraggedProject] = useState(null);
 
   // About data states
   const [aboutData, setAboutData] = useState({
@@ -541,6 +542,65 @@ const Controller = () => {
       showMessage('Error deleting document');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Reorder projects functions
+  const handleDragStart = (e, project) => {
+    setDraggedProject(project);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setDraggedProject(null);
+  };
+
+  const handleDrop = async (e, targetProject) => {
+    e.preventDefault();
+    
+    if (!draggedProject || draggedProject.id === targetProject.id) {
+      return;
+    }
+
+    const filteredProjects = getProjectsByFilter();
+    const draggedIndex = filteredProjects.findIndex(p => p.id === draggedProject.id);
+    const targetIndex = filteredProjects.findIndex(p => p.id === targetProject.id);
+    
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    // Create new projects array with reordered items
+    const newProjects = [...projects];
+    const draggedProjectIndex = newProjects.findIndex(p => p.id === draggedProject.id);
+    const targetProjectIndex = newProjects.findIndex(p => p.id === targetProject.id);
+    
+    // Remove dragged project and insert at target position
+    const [removed] = newProjects.splice(draggedProjectIndex, 1);
+    newProjects.splice(targetProjectIndex, 0, removed);
+
+    try {
+      setLoading(true);
+      setProjects(newProjects);
+      await updateProjects(newProjects);
+      
+      // Dispatch event to notify Projects.js
+      window.dispatchEvent(new CustomEvent('projectsDataUpdated', { 
+        detail: { projects: newProjects, timestamp: new Date().toISOString() } 
+      }));
+      
+      showMessage('Project order updated successfully!');
+    } catch (error) {
+      console.error('Error reordering projects:', error);
+      showMessage('Error reordering projects');
+      // Revert changes on error
+      setProjects(projects);
+    } finally {
+      setLoading(false);
+      setDraggedProject(null);
     }
   };
 
@@ -1589,8 +1649,20 @@ const Controller = () => {
               ) : (
                 <div className={`projects-grid-wrapper ${projectViewMode === 'list' ? 'linear-layout' : 'card-layout'}`}>
                   {getProjectsByFilter().map(project => (
-                    <div key={project.id} className="project-card">
+                    <div 
+                      key={project.id} 
+                      className={`project-card ${draggedProject?.id === project.id ? 'dragging' : ''}`}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, project)}
+                      onDragOver={handleDragOver}
+                      onDragEnd={handleDragEnd}
+                      onDrop={(e) => handleDrop(e, project)}
+                      style={{ cursor: 'move' }}
+                    >
                       <div className="project-card-body">
+                        <div className="project-drag-handle" title="Drag to reorder">
+                          ⋮⋮
+                        </div>
                         <div className="project-type-icon">
                           {getProjectTypeIcon(project.type)}
                         </div>

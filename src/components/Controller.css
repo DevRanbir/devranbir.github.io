@@ -1355,6 +1355,12 @@
   transition: all 0.2s ease;
 }
 
+/* Drag and drop styles */
+.project-card.dragging {
+  opacity: 0.5;
+  transform: rotate(3deg);
+}
+
 .project-card:hover {
   background: rgb(0, 0, 0);
   border-color: rgb(255, 255, 255);
@@ -1366,23 +1372,24 @@
   display: flex;
   gap: 12px;
   align-items: flex-start;
+  position: relative;
 }
 
-.linear-layout .project-card-body {
-  align-items: center;
+.project-drag-handle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: move;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
 }
 
-.project-type-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(0, 0, 0);
-  border: 1px solid rgb(255, 255, 255);
-  border-radius: 4px;
+.project-drag-handle:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .project-info {
