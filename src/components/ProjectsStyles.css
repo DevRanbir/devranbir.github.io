@@ -1181,7 +1181,156 @@
   font-size: 12px;
 }
 
-.form-note p {
+/* GitHub Import Modal Styles */
+.github-repo-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 20px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.github-repo-item {
+  padding: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.github-repo-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.github-repo-item:last-child {
+  border-bottom: none;
+}
+
+.github-repo-label {
+  display: flex;
+  align-items: flex-start;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.github-repo-item input[type="checkbox"] {
+  margin-right: 15px;
+  margin-top: 2px;
+  transform: scale(1.2);
+}
+
+.repo-info {
+  flex: 1;
+}
+
+.repo-name {
+  font-weight: bold;
+  font-size: 16px;
+  color: #0078ff;
+  margin-bottom: 5px;
+}
+
+.repo-type {
+  font-size: 14px;
+  color: #ffd700;
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
+
+.repo-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.repo-stats {
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.repo-language {
+  background: rgba(0, 120, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: #0078ff;
+}
+
+.repo-stars,
+.repo-forks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0078ff, #0056b3);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 120, 255, 0.3);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid #0078ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
   margin: 0;
-  font-style: italic;
 }
