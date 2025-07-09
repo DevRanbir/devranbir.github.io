@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import './ProjectsStyles.css';
@@ -6,7 +6,6 @@ import {
   getProjectsData, 
   updateProjects, 
 } from '../firebase/firestoreService';
-import githubRepoService from '../services/githubRepoService';
 
 const Projects = () => {
   const navigate = useNavigate();
