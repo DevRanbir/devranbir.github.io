@@ -23,6 +23,7 @@ static/js/*key*.js
 static/js/*token*.js
 static/js/*password*.js
 static/js/*private*.js
+static/js
 # misc
 .env
 .DS_Store
