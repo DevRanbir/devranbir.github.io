@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import './Contacts.css';
+import LottieButton from './LottieButton.js';
 import { 
   getContactsData, 
   updateSocialBubbles, 
@@ -848,6 +849,7 @@ const Contacts = () => {
   
   return (
     <div className="homepage">
+      <LottieButton setActiveComponent={setActiveComponent} />
       {/* Spline 3D Background */}
       <div className="spline-background">
         {/* Command Line Interface */}

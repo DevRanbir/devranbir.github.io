@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
+import LottieButton from './LottieButton.js';
 import { 
   updateSocialLinks, 
   updateAuthorDescription, 
@@ -12,6 +13,7 @@ import {
 const Homepage = () => {
   const navigate = useNavigate();
 
+  const [setActiveComponent] = useState('chatbox');
   const [commandInput, setCommandInput] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -680,6 +682,8 @@ const Homepage = () => {
   
   return (
     <div className="homepage">
+      <LottieButton setActiveComponent={setActiveComponent} />
+
       {/* Spline 3D Background */}
       <div className="spline-background">
         {/* Command Line Interface */}
