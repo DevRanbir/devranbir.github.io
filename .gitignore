@@ -10,7 +10,19 @@
 
 # production
 /build
-
+*.env
+*.token
+*.key
+static/js/*secret*
+static/js/*key*
+static/js/*token*
+static/js/*password*
+static/js/*private*
+static/js/*secret*.js
+static/js/*key*.js
+static/js/*token*.js
+static/js/*password*.js
+static/js/*private*.js
 # misc
 .env
 .DS_Store
