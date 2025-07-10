@@ -29,7 +29,6 @@ function App() {
         const result = await initializeGitHubSync('DevRanbir', true);
         
         if (result.success) {
-          console.log('✅ GitHub sync service initialized successfully');
         } else {
           console.warn('⚠️ GitHub sync service initialization failed:', result.error);
         }

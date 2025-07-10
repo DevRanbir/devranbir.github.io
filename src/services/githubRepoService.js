@@ -1,21 +1,82 @@
+import { getDoc, doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
+
+// Utility to initialize the GitHub token in Firestore with a fake value (run once, then update in Firestore UI)
+export async function initializeFakeGithubToken() {
+  const fakeToken = 'ghp_FAKE_TOKEN_FOR_SETUP';
+  try {
+    await GitHubRepoService.setToken(fakeToken);
+    console.log('Initialized github-token document in Firestore with a fake token. Please update it with your real token in the Firestore console.');
+  } catch (error) {
+    console.error('Failed to initialize github-token document:', error);
+  }
+}
 // GitHub Repository Service for fetching user repositories with pinned repos and enhanced sorting
 class GitHubRepoService {
   constructor() {
     this.baseURL = 'https://api.github.com';
-    this.token = process.env.REACT_APP_GITHUB_TOKEN;
+    this.token = null; // Will be loaded from Firestore
+    this.tokenLoaded = false;
+    this.tokenLoadingPromise = null;
   }
 
-  // Get authorization headers
-  getHeaders() {
+  // Firestore document path for GitHub token
+  static getTokenDocRef() {
+    return doc(db, 'website-content', 'github-token');
+  }
+
+  // Fetch token from Firestore (and cache it)
+  async loadToken() {
+    if (this.tokenLoaded && this.token) return this.token;
+    if (this.tokenLoadingPromise) return this.tokenLoadingPromise;
+    this.tokenLoadingPromise = (async () => {
+      try {
+        const docSnap = await getDoc(GitHubRepoService.getTokenDocRef());
+        if (docSnap.exists() && docSnap.data().token) {
+          this.token = docSnap.data().token;
+          this.tokenLoaded = true;
+          console.log('GitHub token loaded from Firestore:');
+          return this.token;
+        } else {
+          this.token = null;
+          this.tokenLoaded = false;
+          return null;
+        }
+      } catch (error) {
+        console.error('Error loading GitHub token from Firestore:', error);
+        this.token = null;
+        this.tokenLoaded = false;
+        return null;
+      } finally {
+        this.tokenLoadingPromise = null;
+      }
+    })();
+    return this.tokenLoadingPromise;
+  }
+
+  // Set token in Firestore (for manual admin use)
+  static async setToken(token) {
+    try {
+      await setDoc(GitHubRepoService.getTokenDocRef(), { token });
+      return true;
+    } catch (error) {
+      console.error('Error setting GitHub token in Firestore:', error);
+      return false;
+    }
+  }
+
+  // Get authorization headers (async, always loads token if not loaded)
+  async getHeaders() {
+    if (!this.tokenLoaded || !this.token) {
+      await this.loadToken();
+    }
     const headers = {
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
     };
-    
     if (this.token) {
       headers['Authorization'] = `token ${this.token}`;
     }
-    
     return headers;
   }
 
@@ -65,9 +126,10 @@ class GitHubRepoService {
         }
       `;
 
+      const headers = await this.getHeaders();
       const response = await fetch('https://api.github.com/graphql', {
         method: 'POST',
-        headers: this.getHeaders(),
+        headers,
         body: JSON.stringify({ query }),
       });
 
@@ -130,8 +192,9 @@ class GitHubRepoService {
       });
 
       const url = `${this.baseURL}/users/${username}/repos?${params}`;
+      const headers = await this.getHeaders();
       const response = await fetch(url, {
-        headers: this.getHeaders(),
+        headers,
       });
 
       if (!response.ok) {
@@ -172,8 +235,9 @@ class GitHubRepoService {
       });
 
       const url = `${this.baseURL}/user/repos?${params}`;
+      const headers = await this.getHeaders();
       const response = await fetch(url, {
-        headers: this.getHeaders(),
+        headers,
       });
 
       if (!response.ok) {
@@ -452,8 +516,9 @@ class GitHubRepoService {
     ];
   }
 
-  // Check if token is configured
-  isTokenConfigured() {
+  // Check if token is configured (async)
+  async isTokenConfigured() {
+    await this.loadToken();
     return !!this.token;
   }
 
