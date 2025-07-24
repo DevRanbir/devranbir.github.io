@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import './Contacts.css';
-import LottieButton from './LottieButton.js';
+import Lanyard from './Lanyard.js';
+import LoadingOverlay from './LoadingOverlay';
 import { 
   getContactsData, 
   updateSocialBubbles, 
@@ -24,6 +25,13 @@ const Contacts = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeComponent, setActiveComponent] = useState('social');
   const [isFullScreenChatbox, setIsFullScreenChatbox] = useState(false);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+
+  // Memoized callback to prevent useEffect loops in LoadingOverlay
+  const handleLoadingComplete = useCallback(() => {
+    console.log('📫 Contacts: LoadingOverlay completed, hiding overlay');
+    setShowLoadingOverlay(false);
+  }, []);
 
   // Contact navbar items
   const [contactNavItems] = useState([
@@ -849,10 +857,20 @@ const Contacts = () => {
   
   return (
     <div className="homepage">
-      <LottieButton setActiveComponent={setActiveComponent} />
-      {/* Spline 3D Background */}
-      <div className="spline-background">
+      {/* LoadingOverlay - Shows for 15 seconds on page load */}
+      {showLoadingOverlay && (
+        <LoadingOverlay 
+          duration={8000}
+          onComplete={handleLoadingComplete}
+        />
+      )}
+
+      {/* Main content - Always rendered but hidden behind overlay when loading */}
+      <div className={`main-content ${showLoadingOverlay ? 'loading' : 'loaded'}`}>
+        {/* Spline 3D Background */}
+        <div className="spline-background">
         {/* Command Line Interface */}
+        <Lanyard position={[2.5, 2, 20]} gravity={[0, -40, 0]} />
         <div className="command-line-container">
           <div className="glass-panel">
             <form id="command-form" autoComplete="off" onSubmit={(e) => e.preventDefault()}>
@@ -1063,6 +1081,7 @@ const Contacts = () => {
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

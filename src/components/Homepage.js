@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
-import LottieButton from './LottieButton.js';
+import TextType from './TextType';
+import Lanyard from './Lanyard'
+import LoadingOverlay from './LoadingOverlay';
 import { 
   updateSocialLinks, 
   updateAuthorDescription, 
@@ -13,7 +15,6 @@ import {
 const Homepage = () => {
   const navigate = useNavigate();
 
-  const [setActiveComponent] = useState('chatbox');
   const [commandInput, setCommandInput] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -37,6 +38,13 @@ const Homepage = () => {
   const [commandMessage, setCommandMessage] = useState('');
   const [showCommandMessage, setShowCommandMessage] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+
+  // Memoized callback to prevent useEffect loops in LoadingOverlay
+  const handleLoadingComplete = useCallback(() => {
+    console.log('🏠 Homepage: LoadingOverlay completed, hiding overlay');
+    setShowLoadingOverlay(false);
+  }, []);
 
   // Firestore subscription unsubscribe function
   const [unsubscribe, setUnsubscribe] = useState(null);
@@ -682,10 +690,18 @@ const Homepage = () => {
   
   return (
     <div className="homepage">
-      <LottieButton setActiveComponent={setActiveComponent} />
+      {/* LoadingOverlay - Shows for 15 seconds on page load */}
+      {showLoadingOverlay && (
+        <LoadingOverlay 
+          duration={8000}
+          onComplete={handleLoadingComplete}
+        />
+      )}
 
-      {/* Spline 3D Background */}
-      <div className="spline-background">
+      {/* Main content - Always rendered but hidden behind overlay when loading */}
+      <div className={`main-content ${showLoadingOverlay ? 'loading' : 'loaded'}`}>
+        {/* Spline 3D Background */}
+        <div className="spline-background">
         {/* Command Line Interface */}
         <div className="command-line-container">
           <div className="glass-panel">
@@ -751,6 +767,8 @@ const Homepage = () => {
             )}
           </div>
         </div>
+
+        <Lanyard position={[2.5, 2, 20]} gravity={[0, -40, 0]} />
         
         {/* Social Media Links - Vertical Column */}
         <div className="social-links-container">
@@ -952,7 +970,18 @@ const Homepage = () => {
               </div>
             ) : (
               <>
-                <p>{authorDescription}</p>
+                <TextType 
+                  text={authorDescription || "Welcome to my profile - Full-stack developer passionate about creating amazing web experiences!"}
+                  typingSpeed={75}
+                  pauseDuration={1500}
+                  deletingSpeed={0}
+                  showCursor={true}
+                  cursorCharacter="|"
+                  className="text-type"
+                  cursorClassName="text-type__cursor"
+                  loop={false}
+                  hideCursorWhileTyping={false}
+                />
                 {editMode && (
                   <button 
                     className="edit-author-btn" 
@@ -1101,7 +1130,7 @@ const Homepage = () => {
           </div>
         )}
       </div>
-
+      </div>
     </div>
   );
 };

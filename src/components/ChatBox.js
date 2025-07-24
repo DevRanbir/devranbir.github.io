@@ -7,7 +7,6 @@ import {
   startAutoCleanup,
   cleanupExpiredMessages
 } from '../firebase/firestoreService';
-import '../utils/cleanupTests'; // Import cleanup tests for console access
 
 const ChatBox = ({ isFullScreen, onToggleFullScreen, editMode }) => {
   const [messages, setMessages] = useState([]);

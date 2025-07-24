@@ -1,0 +1,62 @@
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  transition: opacity var(--fade-duration, 500ms) ease-out;
+  /* Ensure it appears immediately and covers everything */
+  visibility: visible;
+  /* Prevent any content behind from showing through */
+  overflow: hidden;
+}
+
+.loading-overlay--fading {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loading-overlay__content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* Ensure the overlay covers everything including any modals or popups */
+.loading-overlay {
+  pointer-events: auto;
+}
+
+/* Optional: Add a subtle animation to the overlay itself */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-overlay {
+  animation: fadeIn 300ms ease-in;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .loading-overlay__content {
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 480px) {
+  .loading-overlay__content {
+    transform: scale(0.6);
+  }
+}

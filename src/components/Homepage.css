@@ -8,6 +8,28 @@
   background-color: #000;
 }
 
+/* Main content wrapper - controls visibility during loading */
+.main-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.main-content.loading {
+  /* Hidden behind overlay but still rendered for loading */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.main-content.loaded {
+  /* Visible when overlay is done */
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
 .top-area-shade {
     background: radial-gradient(circle,rgba(255, 255, 255, 1) 20%, rgba(0, 0, 0, 1) 15%);
     height: 100vh;
@@ -644,6 +666,29 @@ spline-viewer {
   line-height: 1.6;
   margin: 0;
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* TextType styling within author description */
+.author-description .text-type {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  display: inline-block;
+  white-space: pre-wrap;
+}
+
+.author-description .text-type__cursor {
+  margin-left: 0.25rem;
+  display: inline-block;
+  opacity: 1;
+  color: rgba(255, 255, 255, 0.8);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
 .edit-author-btn {
@@ -1426,4 +1471,33 @@ spline-viewer {
 
 .error-dismiss:hover {
   background-color: rgba(255, 255, 255, 0.2);
+}
+
+.text-type {
+  display: inline-block;
+  white-space: pre-wrap;
+}
+
+.text-type__cursor {
+  margin-left: 0.25rem;
+  display: inline-block;
+  opacity: 1;
+}
+
+.text-type__cursor--hidden {
+  display: none;
+}
+
+.lanyard-wrapper {
+  position: absolute;
+  right: -55%;
+  top: -28%;
+  z-index: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: scale(0.5);
+  transform-origin: center;
 }

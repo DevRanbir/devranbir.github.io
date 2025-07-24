@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css'; // Reusing Homepage styles
 import './About.css'; // New styles for About-specific content
+import Lanyard from './Lanyard'; // Importing Lanyard component
+import LoadingOverlay from './LoadingOverlay';
 import { 
   getAboutData, 
   subscribeToAboutData,
@@ -42,6 +44,13 @@ const About = () => {
   const [readmeError, setReadmeError] = useState(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const [scrollInterval, setScrollInterval] = useState(null);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+
+  // Memoized callback to prevent useEffect loops in LoadingOverlay
+  const handleLoadingComplete = useCallback(() => {
+    console.log('👤 About: LoadingOverlay completed, hiding overlay');
+    setShowLoadingOverlay(false);
+  }, []);
 
   // Dropdown items for navigation
   const dropdownItems = [
@@ -688,8 +697,19 @@ const About = () => {
   
   return (
     <div className="homepage">
-      {/* Spline 3D Background */}
-      <div className="spline-background">
+      {/* LoadingOverlay - Shows for 15 seconds on page load */}
+      {showLoadingOverlay && (
+        <LoadingOverlay 
+          duration={8000}
+          onComplete={handleLoadingComplete}
+        />
+      )}
+
+      {/* Main content - Always rendered but hidden behind overlay when loading */}
+      <div className={`main-content ${showLoadingOverlay ? 'loading' : 'loaded'}`}>
+        {/* Spline 3D Background */}
+        <div className="spline-background">
+        <Lanyard position={[2.5, 2, 20]} gravity={[0, -40, 0]} />
         {/* Command Line Interface */}
         <div className="command-line-container">
           <div className="glass-panel">
@@ -1031,6 +1051,7 @@ const About = () => {
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

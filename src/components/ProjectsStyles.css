@@ -765,6 +765,7 @@
   scrollbar-width: none;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+  padding-top: 2px;
 }
 
 .projects-list.blocks-view {

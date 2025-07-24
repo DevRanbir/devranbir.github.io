@@ -1,7 +1,10 @@
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState, useCallback} from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import './ProjectsStyles.css';
+import Lanyard from './Lanyard';
+import AnimatedList from './AnimatedList';
+import LoadingOverlay from './LoadingOverlay';
 import { 
   getProjectsData, 
   updateProjects, 
@@ -19,6 +22,14 @@ const Projects = () => {
   const [showCommandMessage, setShowCommandMessage] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [projects, setProjects] = useState([]);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+
+  // Memoized callback to prevent useEffect loops in LoadingOverlay
+  const handleLoadingComplete = useCallback(() => {
+    console.log('📽️ Projects: LoadingOverlay completed, hiding overlay');
+    setShowLoadingOverlay(false);
+  }, []);
+
   const [currentPage, setCurrentPage] = useState(0);
   const [editingProject, setEditingProject] = useState(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
@@ -1100,8 +1111,19 @@ const Projects = () => {
   
   return (
     <div className="homepage">
-      {/* Spline 3D Background */}
-      <div className="spline-background">
+      {/* LoadingOverlay - Shows for 3 seconds on Projects page load */}
+      {showLoadingOverlay && (
+        <LoadingOverlay 
+          duration={8000}
+          onComplete={handleLoadingComplete}
+        />
+      )}
+
+      {/* Main content - Always rendered but hidden behind overlay when loading */}
+      <div className={`main-content ${showLoadingOverlay ? 'loading' : 'loaded'}`}>
+        {/* Spline 3D Background */}
+        <div className="spline-background">
+        <Lanyard position={[2.5, 2, 20]} gravity={[0, -40, 0]} />
         {/* Command Line Interface */}
         <div className="command-line-container">
           <div className="glass-panel">
@@ -1365,113 +1387,242 @@ const Projects = () => {
           
           <div className={`projects-list ${viewMode === 'list' ? 'list-view' : 'blocks-view'}`}>
             {currentProjects.length > 0 ? (
-              currentProjects.map((project) => (
-                <div 
-                  key={project.id} 
-                  className="project-item"
-                  style={{ position: 'relative' }}
-                >
-                  <div 
-                    className="project-clickable"
-                    onClick={() => handleProjectClick(project)}
-                    style={{ cursor: 'pointer' }}
-                    title="Click to view options"
-                  >
+              viewMode === 'list' ? (
+                <AnimatedList
+                  items={currentProjects}
+                  onItemSelect={(item, index) => {
+                    handleProjectClick(item);
+                  }}
+                  showGradients={true}
+                  enableArrowNavigation={true}
+                  displayScrollbar={true}
+                  itemRenderer={(project, index) => (
                     <div 
-                      className="project-icon"
-                      title="View project options"
+                      key={project.id} 
+                      className="project-item"
+                      style={{ position: 'relative' }}
                     >
-                      {getProjectIcon(project.type)}
-                    </div>
-                    <div className="project-info">
-                      <div className="project-name">
-                        {project.name}
-                      </div>
-                      {project.description && (
-                        <div className="project-description">
-                          {project.description}
-                        </div>
-                      )}
-                      {viewMode === 'list' && (
-                        <div className="project-meta">
-                          <span className="project-type">{project.type}</span>
-                          {project.dateAdded && <span className="project-date"> • Added {project.dateAdded}</span>}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Project Options Popup */}
-                  {showProjectOptions && showProjectOptions.id === project.id && (
-                    <div className="project-options-popup">
-                      <div className="project-options-backdrop" onClick={handleCloseProjectOptions}></div>
-                      <div className="project-options-content">
-                        <h4>{project.name}</h4>
-                        <div className="project-options-buttons">
-                          {project.repoUrl && (
-                            <button 
-                              className="project-option-btn repo-btn"
-                              onClick={() => handleProjectOptionClick(project, 'repo')}
-                            >
-                              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                              </svg>
-                              View Repository
-                            </button>
-                          )}
-                          {project.liveUrl && (
-                            <button 
-                              className="project-option-btn live-btn"
-                              onClick={() => handleProjectOptionClick(project, 'live')}
-                            >
-                              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                              </svg>
-                              View Live Demo
-                            </button>
-                          )}
-                        </div>
-                        <button 
-                          className="project-options-close" 
-                          onClick={handleCloseProjectOptions}
+                      <div 
+                        className="project-clickable"
+                        onClick={() => handleProjectClick(project)}
+                        style={{ cursor: 'pointer' }}
+                        title="Click to view options"
+                      >
+                        <div 
+                          className="project-icon"
+                          title="View project options"
                         >
-                          <svg viewBox="0 0 384 512"><path fill="#be00ff" d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
-                        </button>
+                          {getProjectIcon(project.type)}
+                        </div>
+                        <div className="project-info">
+                          <div className="project-name">
+                            {project.name}
+                          </div>
+                          {project.description && (
+                            <div className="project-description">
+                              {project.description}
+                            </div>
+                          )}
+                          <div className="project-meta">
+                            <span className="project-type">{project.type}</span>
+                            {project.dateAdded && <span className="project-date"> • Added {project.dateAdded}</span>}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Project Options Popup */}
+                      {showProjectOptions && showProjectOptions.id === project.id && (
+                        <div className="project-options-popup">
+                          <div className="project-options-backdrop" onClick={(e) => {
+                            e.stopPropagation();
+                            handleCloseProjectOptions();
+                          }}></div>
+                          <div className="project-options-content">
+                            <h4>{project.name}</h4>
+                            <div className="project-options-buttons">
+                              {project.repoUrl && (
+                                <button 
+                                  className="project-option-btn repo-btn"
+                                  onClick={() => handleProjectOptionClick(project, 'repo')}
+                                >
+                                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                  </svg>
+                                  View Repository
+                                </button>
+                              )}
+                              {project.liveUrl && (
+                                <button 
+                                  className="project-option-btn live-btn"
+                                  onClick={() => handleProjectOptionClick(project, 'live')}
+                                >
+                                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                  </svg>
+                                  View Live Demo
+                                </button>
+                              )}
+                            </div>
+                            <button 
+                              className="project-options-close" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCloseProjectOptions();
+                              }}
+                            >
+                              <svg viewBox="0 0 384 512"><path fill="#be00ff" d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="project-actions">
+                        {editMode ? (
+                          <>
+                            <button 
+                              className="edit-project-btn" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditingProject(project);
+                              }}
+                              title="Edit project name"
+                            >
+                              ✏️
+                            </button>
+                            <button 
+                              className="remove-project-btn" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveProject(project.id);
+                              }}
+                              title="Delete project"
+                            >
+                              🗑️
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
-                  
-                  <div className="project-actions">
-                    {editMode ? (
-                      <>
-                        <button 
-                          className="edit-project-btn" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            startEditingProject(project);
-                          }}
-                          title="Edit project name"
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          className="remove-project-btn" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveProject(project.id);
-                          }}
-                          title="Delete project"
-                        >
-                          🗑️
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                      </>
+                />
+              ) : (
+                currentProjects.map((project) => (
+                  <div 
+                    key={project.id} 
+                    className="project-item"
+                    style={{ position: 'relative' }}
+                  >
+                    <div 
+                      className="project-clickable"
+                      onClick={() => handleProjectClick(project)}
+                      style={{ cursor: 'pointer' }}
+                      title="Click to view options"
+                    >
+                      <div 
+                        className="project-icon"
+                        title="View project options"
+                      >
+                        {getProjectIcon(project.type)}
+                      </div>
+                      <div className="project-info">
+                        <div className="project-name">
+                          {project.name}
+                        </div>
+                        {project.description && (
+                          <div className="project-description">
+                            {project.description}
+                          </div>
+                        )}
+                        {viewMode === 'list' && (
+                          <div className="project-meta">
+                            <span className="project-type">{project.type}</span>
+                            {project.dateAdded && <span className="project-date"> • Added {project.dateAdded}</span>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Project Options Popup */}
+                    {showProjectOptions && showProjectOptions.id === project.id && (
+                      <div className="project-options-popup">
+                        <div className="project-options-backdrop" onClick={(e) => {
+                          e.stopPropagation();
+                          handleCloseProjectOptions();
+                        }}></div>
+                        <div className="project-options-content">
+                          <h4>{project.name}</h4>
+                          <div className="project-options-buttons">
+                            {project.repoUrl && (
+                              <button 
+                                className="project-option-btn repo-btn"
+                                onClick={() => handleProjectOptionClick(project, 'repo')}
+                              >
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                </svg>
+                                View Repository
+                              </button>
+                            )}
+                            {project.liveUrl && (
+                              <button 
+                                className="project-option-btn live-btn"
+                                onClick={() => handleProjectOptionClick(project, 'live')}
+                              >
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                                View Live Demo
+                              </button>
+                            )}
+                          </div>
+                          <button 
+                            className="project-options-close" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCloseProjectOptions();
+                            }}
+                          >
+                            <svg viewBox="0 0 384 512"><path fill="#be00ff" d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg>
+                          </button>
+                        </div>
+                      </div>
                     )}
+                    
+                    <div className="project-actions">
+                      {editMode ? (
+                        <>
+                          <button 
+                            className="edit-project-btn" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditingProject(project);
+                            }}
+                            title="Edit project name"
+                          >
+                            ✏️
+                          </button>
+                          <button 
+                            className="remove-project-btn" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveProject(project.id);
+                            }}
+                            title="Delete project"
+                          >
+                            🗑️
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))
+              )
             ) : (
               // Show "Coming Soon" message when no projects match the filter
               <div className="empty-state">
@@ -1677,6 +1828,7 @@ const Projects = () => {
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

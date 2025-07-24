@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import './DocumentsStyles.css';
+import Lanyard from './Lanyard';
+import LoadingOverlay from './LoadingOverlay';
 
 // Firebase imports
 import { 
@@ -34,6 +36,13 @@ const Documents = () => {
   });
   const [selectedFilter, setSelectedFilter] = useState('all'); // New state for filtering
   const [viewMode, setViewMode] = useState('blocks'); // New state for view mode: 'blocks' or 'list'
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+
+  // Memoized callback to prevent useEffect loops in LoadingOverlay
+  const handleLoadingComplete = useCallback(() => {
+    console.log('📁 Documents: LoadingOverlay completed, hiding overlay');
+    setShowLoadingOverlay(false);
+  }, []);
 
   // Dummy dropdown items for Windows Explorer style interface
   const dropdownItems = [
@@ -1108,9 +1117,20 @@ const Documents = () => {
   
   return (
     <div className="homepage">
-      {/* Spline 3D Background */}
-      <div className="spline-background">
+      {/* LoadingOverlay - Shows for 15 seconds on page load */}
+      {showLoadingOverlay && (
+        <LoadingOverlay 
+          duration={8000}
+          onComplete={handleLoadingComplete}
+        />
+      )}
+
+      {/* Main content - Always rendered but hidden behind overlay when loading */}
+      <div className={`main-content ${showLoadingOverlay ? 'loading' : 'loaded'}`}>
+        {/* Spline 3D Background */}
+        <div className="spline-background">
         {/* Command Line Interface */}
+        <Lanyard position={[2.5, 2, 20]} gravity={[0, -40, 0]} />
         <div className="command-line-container">
           <div className="glass-panel">
             <form id="command-form" autoComplete="off" onSubmit={(e) => e.preventDefault()}>
@@ -1629,6 +1649,7 @@ const Documents = () => {
             </button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

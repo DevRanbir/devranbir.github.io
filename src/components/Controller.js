@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css'; // Reusing Homepage.css
 import './Controller.css'; // New styles for Controller component
+import Lanyard from './Lanyard';
+import LoadingOverlay from './LoadingOverlay';
 
 import { 
   getHomepageData, 
@@ -42,6 +44,13 @@ const Controller = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
+
+  // Memoized callback to prevent useEffect loops in LoadingOverlay
+  const handleLoadingComplete = useCallback(() => {
+    console.log('🎮 Controller: LoadingOverlay completed, hiding overlay');
+    setShowLoadingOverlay(false);
+  }, []);
   
   // Homepage data sync states
   const [socialLinks, setSocialLinks] = useState([]);
@@ -2273,6 +2282,7 @@ const Controller = () => {
     return (
       <div className="homepage">
         <div className="spline-background">
+          <Lanyard position={[2.5, 2, 20]} gravity={[0, -40, 0]} />
           {/* Password Modal */}
           {showPasswordModal && (
             <div className="password-modal-overlay">
@@ -2361,7 +2371,17 @@ const Controller = () => {
 
   return (
     <div className="homepage">
-      <div className="spline-background">
+      {/* LoadingOverlay - Shows for 15 seconds on page load */}
+      {showLoadingOverlay && (
+        <LoadingOverlay 
+          duration={15000}
+          onComplete={handleLoadingComplete}
+        />
+      )}
+
+      {/* Main content - Always rendered but hidden behind overlay when loading */}
+      <div className={`main-content ${showLoadingOverlay ? 'loading' : 'loaded'}`}>
+        <div className="spline-background">
         {/* Social Media Links - Repurposed as Navigation Links */}
         <div className="social-links-container">
           {navigationLinks.map((link) => (
@@ -2446,6 +2466,7 @@ const Controller = () => {
             <div className="shape shape-4"></div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
