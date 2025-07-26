@@ -4,6 +4,7 @@ import './Homepage.css';
 import './DocumentsStyles.css';
 import Lanyard from './Lanyard';
 import LoadingOverlay from './LoadingOverlay';
+import FullScreenPrompt from './FullScreenPrompt';
 
 // Firebase imports
 import { 
@@ -1117,6 +1118,9 @@ const Documents = () => {
   
   return (
     <div className="homepage">
+      {/* FullScreen Prompt - Shows for mobile users */}
+      <FullScreenPrompt />
+
       {/* LoadingOverlay - Shows for 15 seconds on page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 

@@ -5,6 +5,7 @@ import './ProjectsStyles.css';
 import Lanyard from './Lanyard';
 import AnimatedList from './AnimatedList';
 import LoadingOverlay from './LoadingOverlay';
+import FullScreenPrompt from './FullScreenPrompt';
 import { 
   getProjectsData, 
   updateProjects, 
@@ -1111,6 +1112,9 @@ const Projects = () => {
   
   return (
     <div className="homepage">
+      {/* FullScreen Prompt - Shows for mobile users */}
+      <FullScreenPrompt />
+
       {/* LoadingOverlay - Shows for 3 seconds on Projects page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 

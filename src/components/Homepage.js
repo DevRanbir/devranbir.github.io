@@ -4,6 +4,7 @@ import './Homepage.css';
 import TextType from './TextType';
 import Lanyard from './Lanyard'
 import LoadingOverlay from './LoadingOverlay';
+import FullScreenPrompt from './FullScreenPrompt';
 import { 
   updateSocialLinks, 
   updateAuthorDescription, 
@@ -690,6 +691,9 @@ const Homepage = () => {
   
   return (
     <div className="homepage">
+      {/* FullScreen Prompt - Shows for mobile users */}
+      <FullScreenPrompt />
+
       {/* LoadingOverlay - Shows for 15 seconds on page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 

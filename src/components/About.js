@@ -4,6 +4,7 @@ import './Homepage.css'; // Reusing Homepage styles
 import './About.css'; // New styles for About-specific content
 import Lanyard from './Lanyard'; // Importing Lanyard component
 import LoadingOverlay from './LoadingOverlay';
+import FullScreenPrompt from './FullScreenPrompt';
 import { 
   getAboutData, 
   subscribeToAboutData,
@@ -697,6 +698,9 @@ const About = () => {
   
   return (
     <div className="homepage">
+      {/* FullScreen Prompt - Shows for mobile users */}
+      <FullScreenPrompt />
+
       {/* LoadingOverlay - Shows for 15 seconds on page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 

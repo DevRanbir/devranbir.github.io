@@ -4,6 +4,7 @@ import './Homepage.css'; // Reusing Homepage.css
 import './Controller.css'; // New styles for Controller component
 import Lanyard from './Lanyard';
 import LoadingOverlay from './LoadingOverlay';
+import FullScreenPrompt from './FullScreenPrompt';
 
 import { 
   getHomepageData, 
@@ -2371,6 +2372,9 @@ const Controller = () => {
 
   return (
     <div className="homepage">
+      {/* FullScreen Prompt - Shows for mobile users */}
+      <FullScreenPrompt />
+
       {/* LoadingOverlay - Shows for 15 seconds on page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 

@@ -4,6 +4,7 @@ import './Homepage.css';
 import './Contacts.css';
 import Lanyard from './Lanyard.js';
 import LoadingOverlay from './LoadingOverlay';
+import FullScreenPrompt from './FullScreenPrompt';
 import { 
   getContactsData, 
   updateSocialBubbles, 
@@ -857,6 +858,9 @@ const Contacts = () => {
   
   return (
     <div className="homepage">
+      {/* FullScreen Prompt - Shows for mobile users */}
+      <FullScreenPrompt />
+
       {/* LoadingOverlay - Shows for 15 seconds on page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 
