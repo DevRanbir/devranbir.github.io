@@ -44,7 +44,15 @@ const Projects = () => {
   });
   const [showProjectOptions, setShowProjectOptions] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState('all'); // New state for filtering
-  const [viewMode, setViewMode] = useState('blocks'); // New state for view mode: 'blocks' or 'list'
+  const getDefaultViewMode = () => {
+    if (typeof window !== "undefined" && window.innerWidth <= 768) {
+      return 'list'; // mobile
+    }
+    return 'blocks'; // desktop
+  };
+
+  const [viewMode, setViewMode] = useState(getDefaultViewMode);
+
 
   // Dropdown items for Windows Explorer style interface
   const dropdownItems = [
@@ -1137,7 +1145,7 @@ const Projects = () => {
                 <input
                   type="text"
                   className="command-input"
-                  placeholder={editMode ? "Type a command or click a template below..." : "Type a command or search..."}
+                  placeholder={editMode ? "Type a command or click a template below..." : "Search, navigate, or run a command..."}
                   value={commandInput}
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}

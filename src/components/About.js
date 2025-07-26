@@ -723,7 +723,7 @@ const About = () => {
                 <input
                   type="text"
                   className="command-input"
-                  placeholder={editMode ? "Type a command or click a template below..." : "Type a command or search..."}
+                  placeholder={editMode ? "Type a command or click a template below..." : "Search, navigate, or run a command..."}
                   value={commandInput}
                   onChange={handleInputChange}
                   onFocus={handleInputFocus}

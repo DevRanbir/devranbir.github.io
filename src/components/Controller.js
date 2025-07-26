@@ -32,6 +32,9 @@ import {
   subscribeToContactsData
 } from '../firebase/firestoreService';
 
+// GitHub sync service import
+import githubSyncService from '../services/githubSyncService';
+
 const Controller = () => {
   const navigate = useNavigate();
 
@@ -145,6 +148,22 @@ const Controller = () => {
     }
   });
 
+  // GitHub sync service states
+  const [githubSyncStatus, setGithubSyncStatus] = useState({
+    isInitialized: false,
+    username: 'DevRanbir',
+    lastSyncTime: null,
+    syncInProgress: false,
+    autoSyncEnabled: false
+  });
+  // eslint-disable-next-line 
+  const [githubServiceInfo, setGithubServiceInfo] = useState({});
+  // eslint-disable-next-line 
+  const [githubProjectStatus, setGithubProjectStatus] = useState([]);
+  const [githubSyncResults, setGithubSyncResults] = useState([]);
+  const [githubTestResults, setGithubTestResults] = useState([]);
+  const [githubUsername, setGithubUsername] = useState('DevRanbir');
+
   // Navigation links (reusing social links design)
   const navigationLinks = [
     { 
@@ -152,6 +171,12 @@ const Controller = () => {
       icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9,22 9,12 15,12 15,22"></polyline></svg>, 
       path: '/',
       label: 'Home'
+    },
+    { 
+      id: 'github', 
+      icon: <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>, 
+      path: '/github',
+      label: 'GitHub'
     },
     { 
       id: 'documents', 
@@ -1152,6 +1177,218 @@ const Controller = () => {
     }
   };
 
+  // === GITHUB SYNC SERVICE MANAGEMENT ===
+  
+  // Create refreshStatus function separately to avoid circular dependencies
+  const refreshGithubStatus = useCallback(async () => {
+    try {
+      const [status, serviceInfo, projectStatus] = await Promise.all([
+        githubSyncService.getSyncStatus(),
+        githubSyncService.getServiceInfo(),
+        githubSyncService.getProjectStatus()
+      ]);
+      
+      setGithubSyncStatus(prev => ({
+        ...prev,
+        ...status,
+        lastSyncTime: serviceInfo.lastSyncTime
+      }));
+      setGithubServiceInfo(serviceInfo);
+      setGithubProjectStatus(projectStatus);
+    } catch (error) {
+      console.error('Error refreshing GitHub status:', error);
+      setError(`Failed to refresh status: ${error.message}`);
+    }
+  }, []);
+  
+  const githubSyncManagementComponent = {
+    // Initialize GitHub sync service
+    initialize: async () => {
+      try {
+        setLoading(true);
+        const result = await githubSyncService.initialize(githubUsername, true);
+        if (result.success) {
+          setGithubSyncStatus(prev => ({ ...prev, isInitialized: true }));
+          showMessage('GitHub sync service initialized successfully!');
+          await refreshGithubStatus();
+        } else {
+          throw new Error(result.error || 'Failed to initialize');
+        }
+      } catch (error) {
+        console.error('Error initializing GitHub sync:', error);
+        setError(`Failed to initialize GitHub sync: ${error.message}`);
+        showMessage('Error initializing GitHub sync service');
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Start auto sync
+    startAutoSync: async () => {
+      try {
+        setLoading(true);
+        const result = await githubSyncService.startAutoSync(githubUsername);
+        if (result.success) {
+          setGithubSyncStatus(prev => ({ ...prev, autoSyncEnabled: true }));
+          showMessage('Auto sync started successfully!');
+        } else {
+          throw new Error(result.error || 'Failed to start auto sync');
+        }
+      } catch (error) {
+        console.error('Error starting auto sync:', error);
+        setError(`Failed to start auto sync: ${error.message}`);
+        showMessage('Error starting auto sync');
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Stop auto sync
+    stopAutoSync: async () => {
+      try {
+        setLoading(true);
+        const result = await githubSyncService.stopAutoSync();
+        if (result.success) {
+          setGithubSyncStatus(prev => ({ ...prev, autoSyncEnabled: false }));
+          showMessage('Auto sync stopped successfully!');
+        } else {
+          throw new Error(result.error || 'Failed to stop auto sync');
+        }
+      } catch (error) {
+        console.error('Error stopping auto sync:', error);
+        setError(`Failed to stop auto sync: ${error.message}`);
+        showMessage('Error stopping auto sync');
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Manual sync
+    manualSync: async () => {
+      try {
+        setLoading(true);
+        setGithubSyncResults([]);
+        const result = await githubSyncService.manualSync();
+        setGithubSyncResults([{ 
+          timestamp: new Date().toISOString(),
+          action: 'Manual Sync',
+          result: result.success ? 'Success' : 'Failed',
+          details: result.message || result.error || 'Manual sync completed'
+        }]);
+        if (result.success) {
+          showMessage('Manual sync completed successfully!');
+          await refreshGithubStatus();
+        } else {
+          throw new Error(result.error || 'Manual sync failed');
+        }
+      } catch (error) {
+        console.error('Error during manual sync:', error);
+        setError(`Manual sync failed: ${error.message}`);
+        setGithubSyncResults(prev => [...prev, {
+          timestamp: new Date().toISOString(),
+          action: 'Manual Sync',
+          result: 'Error',
+          details: error.message
+        }]);
+        showMessage('Error during manual sync');
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Get sync status
+    refreshStatus: refreshGithubStatus,
+
+    // Run tests
+    runTests: async () => {
+      try {
+        setLoading(true);
+        setGithubTestResults([]);
+        const results = await githubSyncService.runTests();
+        setGithubTestResults(results);
+        showMessage('GitHub sync tests completed!');
+      } catch (error) {
+        console.error('Error running tests:', error);
+        setError(`Tests failed: ${error.message}`);
+        setGithubTestResults([{
+          test: 'Test Suite',
+          status: 'error',
+          message: error.message
+        }]);
+        showMessage('Error running GitHub sync tests');
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Force sync project
+    forceSyncProject: async (projectId) => {
+      try {
+        setLoading(true);
+        const result = await githubSyncService.forceSyncProject(projectId);
+        if (result.success) {
+          showMessage(`Project ${projectId} synced successfully!`);
+          await refreshGithubStatus();
+        } else {
+          throw new Error(result.error || 'Force sync failed');
+        }
+      } catch (error) {
+        console.error('Error force syncing project:', error);
+        setError(`Force sync failed: ${error.message}`);
+        showMessage('Error force syncing project');
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Remove project
+    removeProject: async (projectId) => {
+      try {
+        setLoading(true);
+        const result = await githubSyncService.removeProject(projectId);
+        if (result.success) {
+          showMessage(`Project ${projectId} removed successfully!`);
+          await refreshGithubStatus();
+        } else {
+          throw new Error(result.error || 'Remove project failed');
+        }
+      } catch (error) {
+        console.error('Error removing project:', error);
+        setError(`Remove project failed: ${error.message}`);
+        showMessage('Error removing project');
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Reset user edits
+    resetUserEdits: async () => {
+      try {
+        setLoading(true);
+        const result = await githubSyncService.resetUserEdits();
+        if (result.success) {
+          showMessage('User edit flags reset successfully!');
+          await refreshGithubStatus();
+        } else {
+          throw new Error(result.error || 'Reset failed');
+        }
+      } catch (error) {
+        console.error('Error resetting user edits:', error);
+        setError(`Reset failed: ${error.message}`);
+        showMessage('Error resetting user edits');
+      } finally {
+        setLoading(false);
+      }
+    },
+
+    // Update username
+    updateUsername: (newUsername) => {
+      setGithubUsername(newUsername);
+      githubSyncService.updateConfig({ username: newUsername });
+      showMessage(`GitHub username updated to: ${newUsername}`);
+    }
+  };
+
   // Render content based on active section
   const renderSectionContent = () => {
     switch (activeSection) {
@@ -2143,6 +2380,179 @@ const Controller = () => {
             </div>
           </div>
         );
+      case 'github':
+        return (
+          <div className="section-content github-management">
+            <div className="github-header">
+              <img src="/pic11.png" alt="GitHub Management" className="section-header-image2" />
+              <p>Manage GitHub sync service and repository integration.</p>
+              {loading && <div className="loading-indicator">🔄 Processing GitHub operations...</div>}
+              {error && <div className="error-indicator">❌ {error}</div>}
+            </div>
+            
+            {/* Service Status Section */}
+            <div className="management-section">
+              <h3>🔧 Service Status & Configuration</h3>
+              <div className="github-status-manager">
+                <div className="status-display">
+                  
+                  {/* Username Configuration */}
+                  <div className="config-section">
+                    <div className="form-group">
+                      <label>GitHub Username:</label>
+                      <div className="username-config">
+                        <input
+                          type="text"
+                          value={githubUsername}
+                          onChange={(e) => setGithubUsername(e.target.value)}
+                          className="edit-input"
+                          placeholder="Enter GitHub username"
+                        />
+                        <button 
+                          onClick={() => githubSyncManagementComponent.updateUsername(githubUsername)}
+                          className="update-btn"
+                          disabled={loading}
+                        >
+                          Update
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="action-buttons">
+                    <button 
+                      onClick={githubSyncManagementComponent.initialize}
+                      className="btn-primary"
+                      disabled={loading || githubSyncStatus.isInitialized}
+                    >
+                      🚀 Initialize Service
+                    </button>
+                    <button 
+                      onClick={githubSyncManagementComponent.startAutoSync}
+                      className="btn-success"
+                      disabled={loading || !githubSyncStatus.isInitialized || githubSyncStatus.autoSyncEnabled}
+                    >
+                      ▶️ Start Auto Sync
+                    </button>
+                    <button 
+                      onClick={githubSyncManagementComponent.stopAutoSync}
+                      className="btn-warning"
+                      disabled={loading || !githubSyncStatus.autoSyncEnabled}
+                    >
+                      ⏸️ Stop Auto Sync
+                    </button>
+                    <button 
+                      onClick={refreshGithubStatus}
+                      className="btn-secondary"
+                      disabled={loading}
+                    >
+                      🔄 Refresh Status
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Manual Operations Section */}
+            <div className="management-section">
+              <h3>🔧 Manual Operations</h3>
+              <div className="manual-operations-manager">
+                <div className="operations-grid">
+                  <div className="operation-card">
+                    <h4>📥 Manual Sync</h4>
+                    <p>Trigger a manual sync of all non-user-edited projects</p>
+                    <button 
+                      onClick={githubSyncManagementComponent.manualSync}
+                      className="btn-primary"
+                      disabled={loading || !githubSyncStatus.isInitialized}
+                    >
+                      🔄 Run Manual Sync
+                    </button>
+                  </div>
+                  
+                  <div className="operation-card">
+                    <h4>🧪 Run Tests</h4>
+                    <p>Run GitHub sync service tests to verify functionality</p>
+                    <button 
+                      onClick={githubSyncManagementComponent.runTests}
+                      className="btn-info"
+                      disabled={loading || !githubSyncStatus.isInitialized}
+                    >
+                      🧪 Run Tests
+                    </button>
+                  </div>
+                  
+                  <div className="operation-card">
+                    <h4>🔄 Reset User Edits</h4>
+                    <p>Reset all user edit flags (allows projects to be re-synced)</p>
+                    <button 
+                      onClick={githubSyncManagementComponent.resetUserEdits}
+                      className="btn-warning"
+                      disabled={loading || !githubSyncStatus.isInitialized}
+                    >
+                      🔄 Reset Flags
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sync Results Section */}
+            {Array.isArray(githubSyncResults) && githubSyncResults.length > 0 && (
+              <div className="management-section">
+                <h3>📋 Recent Sync Results</h3>
+                <div className="sync-results-manager">
+                  <div className="results-list">
+                    {githubSyncResults.map((result, index) => (
+                      <div key={index} className={`result-item ${result.result.toLowerCase()}`}>
+                        <div className="result-header">
+                          <span className="result-action">{result.action}</span>
+                          <span className="result-timestamp">
+                            {new Date(result.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="result-status">
+                          Status: <span className={`status-${result.result.toLowerCase()}`}>{result.result}</span>
+                        </div>
+                        <div className="result-details">{result.details}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Test Results Section */}
+            {Array.isArray(githubTestResults) && githubTestResults.length > 0 && (
+              <div className="management-section">
+                <h3>🧪 Test Results</h3>
+                <div className="test-results-manager">
+                  <div className="test-results-list">
+                    {githubTestResults.map((test, index) => (
+                      <div key={index} className={`test-result-item ${test.status}`}>
+                        <div className="test-info">
+                          <h4 className="test-name">{test.test}</h4>
+                          <span className={`test-status status-${test.status}`}>
+                            {test.status === 'passed' ? '✅' : test.status === 'failed' ? '❌' : '⚠️'} 
+                            {test.status.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="test-message">{test.message}</div>
+                        {test.details && (
+                          <div className="test-details">
+                            <pre>{JSON.stringify(test.details, null, 2)}</pre>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+        );
       default:
         return (
           <div className="section-content">
@@ -2240,6 +2650,14 @@ const Controller = () => {
       };
     }
   }, [isAuthenticated, loadHomepageData, loadDocumentsData, loadProjectsData, loadAboutData, loadContactsData]);
+
+  // Initialize GitHub sync service
+  useEffect(() => {
+    if (isAuthenticated && activeSection === 'github') {
+      // Refresh GitHub status when GitHub section is accessed
+      refreshGithubStatus();
+    }
+  }, [isAuthenticated, activeSection, refreshGithubStatus]);
 
   // Allowed document types
   const allowedDocTypes = [
@@ -2378,7 +2796,7 @@ const Controller = () => {
       {/* LoadingOverlay - Shows for 15 seconds on page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 
-          duration={15000}
+          duration={4000}
           onComplete={handleLoadingComplete}
         />
       )}
@@ -2415,7 +2833,7 @@ const Controller = () => {
               <input
                 type="text"
                 className="command-input"
-                placeholder="Controller mode - UI only (use navigation buttons)"
+                placeholder="Controller mode "
                 disabled
                 style={{ opacity: 0.6, cursor: 'not-allowed' }}
               />

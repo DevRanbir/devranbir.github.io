@@ -968,6 +968,7 @@ spline-viewer {
     flex-wrap: wrap;
     width: 100%;
     justify-content: center;
+    z-index: 1000;
   }
     
   .social-link svg {

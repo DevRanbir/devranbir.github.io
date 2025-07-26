@@ -1294,7 +1294,6 @@
 .btn-primary:hover {
   background: linear-gradient(135deg, #0056b3, #004085);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 120, 255, 0.3);
 }
 
 .btn-secondary {
@@ -1342,5 +1341,11 @@
     right: 0;
     width: 400px;
     top: 53%
+  }
+  .list-view .project-item {
+    width: 68%; 
+  }
+  .projects-list.list-view .empty-state {
+      transform: translateX(6%) !important;
   }
 }
