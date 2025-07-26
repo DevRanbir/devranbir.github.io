@@ -860,7 +860,7 @@ const Contacts = () => {
       {/* LoadingOverlay - Shows for 15 seconds on page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 
-          duration={8000}
+          duration={4000}
           onComplete={handleLoadingComplete}
         />
       )}

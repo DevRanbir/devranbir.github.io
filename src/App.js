@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Homepage from './components/Homepage';
 import Documents from './components/Documents';
@@ -15,6 +15,73 @@ import './utils/chatCleanup';
 import { initializeGitHubSync } from './services/githubSyncService';
 
 function App() {
+  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
+
+  // Check if device is mobile and fullscreen status
+  useEffect(() => {
+    const checkMobileAndFullscreen = () => {
+      const isMobile = window.innerWidth <= 768;
+      const isCurrentlyFullscreen = document.fullscreenElement !== null || 
+                                    document.webkitFullscreenElement !== null ||
+                                    document.mozFullScreenElement !== null ||
+                                    document.msFullscreenElement !== null;
+      
+      if (isMobile && !isCurrentlyFullscreen) {
+        setShowFullscreenPrompt(true);
+      } else {
+        setShowFullscreenPrompt(false);
+      }
+    };
+
+    // Check on load
+    checkMobileAndFullscreen();
+
+    // Listen for fullscreen changes
+    const handleFullscreenChange = () => {
+      checkMobileAndFullscreen();
+    };
+
+    // Listen for window resize
+    const handleResize = () => {
+      checkMobileAndFullscreen();
+    };
+
+    // Add event listeners
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Function to enter fullscreen
+  const enterFullscreen = () => {
+    const element = document.documentElement;
+    
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if (element.webkitRequestFullscreen) {
+      element.webkitRequestFullscreen();
+    } else if (element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if (element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    }
+  };
+
+  // Function to dismiss prompt (continue without fullscreen)
+  const dismissPrompt = () => {
+    setShowFullscreenPrompt(false);
+  };
   useEffect(() => {
     // Initialize GitHub sync service when app starts
     const initializeSync = async () => {
@@ -95,6 +162,34 @@ function App() {
 
   return (
     <div className="App">
+      {/* Fullscreen Prompt for Mobile */}
+      {showFullscreenPrompt && (
+        <div className="fullscreen-prompt-overlay">
+          <div className="fullscreen-prompt-modal">
+            <div className="fullscreen-prompt-icon">📱</div>
+            <h3>Better Experience Awaits</h3>
+            <p>
+              For the best experience on mobile, we recommend using fullscreen mode. 
+              This will give you more space to explore and interact with the content.
+            </p>
+            <div className="fullscreen-prompt-buttons">
+              <button 
+                onClick={enterFullscreen}
+                className="fullscreen-enter-btn"
+              >
+                Enter Fullscreen
+              </button>
+              <button 
+                onClick={dismissPrompt}
+                className="fullscreen-dismiss-btn"
+              >
+                Continue Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Router>
         <Routes>
           <Route path="/" element={<Homepage />} />

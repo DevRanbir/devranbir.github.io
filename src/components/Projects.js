@@ -1114,7 +1114,7 @@ const Projects = () => {
       {/* LoadingOverlay - Shows for 3 seconds on Projects page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 
-          duration={8000}
+          duration={4000}
           onComplete={handleLoadingComplete}
         />
       )}

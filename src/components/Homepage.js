@@ -693,7 +693,7 @@ const Homepage = () => {
       {/* LoadingOverlay - Shows for 15 seconds on page load */}
       {showLoadingOverlay && (
         <LoadingOverlay 
-          duration={8000}
+          duration={4000}
           onComplete={handleLoadingComplete}
         />
       )}
@@ -971,7 +971,7 @@ const Homepage = () => {
             ) : (
               <>
                 <TextType 
-                  text={authorDescription || "Welcome to my profile - Full-stack developer passionate about creating amazing web experiences!"}
+                  text={authorDescription || ""}
                   typingSpeed={75}
                   pauseDuration={1500}
                   deletingSpeed={0}
