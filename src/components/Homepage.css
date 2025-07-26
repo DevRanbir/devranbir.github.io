@@ -936,7 +936,7 @@ spline-viewer {
   .author-section {
     width: 90%;
     right: 5%;
-    top: 20%;
+    top: 23%;
   }
 }
 
@@ -960,15 +960,16 @@ spline-viewer {
   }
   
   .social-links-container {
-    left: 20px;
+    left: 1px !important;
     gap: 15px;
+    top: 90%;
+    z-index: 100;
+    flex-direction: row-reverse;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: center;
   }
-  
-  .social-link {
-    width: 40px;
-    height: 40px;
-  }
-  
+    
   .social-link svg {
     width: 20px;
     height: 20px;
@@ -999,8 +1000,8 @@ spline-viewer {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 25px;
   display: flex;
   justify-content: center;
@@ -1255,7 +1256,6 @@ spline-viewer {
 @media (max-width: 768px) {
   .digital-clock-container {
     top: 15px;
-    left: 15px;
     padding: 12px 15px;
   }
   
@@ -1284,7 +1284,6 @@ spline-viewer {
 @media (max-width: 480px) {
   .digital-clock-container {
     top: 10px;
-    left: 10px;
     padding: 10px 12px;
   }
   
@@ -1500,4 +1499,45 @@ spline-viewer {
   align-items: center;
   transform: scale(0.5);
   transform-origin: center;
+}
+
+@media (max-width: 768px) {
+    .authornameimg {
+        display: block;
+    }
+    .author-avatar {
+        max-width: 210px;
+        margin-bottom: -10%;
+        object-fit: cover;
+    }
+    .author-section {
+        width: 100%;
+        padding-left: 50px;
+        backdrop-filter: none;
+    }
+    .lanyard-wrapper{
+      display: none;
+    }
+    .digital-clock-container {
+      top: 80px;
+      width: 100%;
+      margin-left: -20px;
+    }
+    .clock-container {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .clock-col:not(:last-child)::after {
+      display: none;
+    }
+    .top-area-shade #logo {
+      display: none;
+    }
+    .top-area-shade{
+      width: 100%;
+    }
+    .spline-cover {
+      right: 4%;
+    }
 }

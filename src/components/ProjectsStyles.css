@@ -1335,3 +1335,12 @@
   font-size: 16px;
   margin: 0;
 }
+
+
+@media (max-width: 768px) {
+  .projects-section{
+    right: 0;
+    width: 400px;
+    top: 53%
+  }
+}
